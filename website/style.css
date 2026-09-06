@@ -347,6 +347,25 @@ main {
   color: var(--accent);
 }
 
+.install-note {
+  margin-top: 16px;
+  font-size: 13px;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.install-note code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  background: rgba(88, 166, 255, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
 .privacy-section { border-top: none; padding-top: 0; }
 
 .privacy-card {

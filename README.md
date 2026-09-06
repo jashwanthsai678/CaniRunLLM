@@ -39,13 +39,32 @@ who wants it.
 
 ## Install
 
-Requires Python 3.10+.
+Requires **Python 3.10 or newer**.
+
+```bash
+pip install canirunllm
+```
+
+or from source:
 
 ```bash
 git clone https://github.com/jashwanthsai678/CaniRunLLM.git
 cd CaniRunLLM
 pip install -e .
 ```
+
+> **Windows users with multiple Python versions installed:** your plain
+> `pip`/`python` commands might point at an older Python (commonly 3.9,
+> which this project doesn't support). If `pip install canirunllm` says
+> it can't find a matching version, check what's installed with:
+> ```cmd
+> py -0
+> ```
+> then install using a specific newer version explicitly:
+> ```cmd
+> py -3.11 -m pip install canirunllm
+> py -3.11 -m canirunllm.cli scan
+> ```
 
 ## Quick start
 
