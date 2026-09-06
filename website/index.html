@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CanIRunLLM — Which local AI models can your PC run?</title>
+<meta name="description" content="Scan your hardware and find out which open-source LLMs you can actually run, which one you should pick, and why. Runs entirely on your machine.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="logo">CanIRunLLM</span>
+    <nav class="topnav">
+      <a href="#how-it-works">How it works</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/jashwanthsai678/CaniRunLLM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <h1>Which local AI models can your PC actually run?</h1>
+    <p class="hero-sub">
+      CanIRunLLM scans your real CPU, RAM, and GPU, checks it against a
+      registry of real open-weight models, and tells you what you can run
+      comfortably, what needs a smaller quantization, and why — in plain
+      language, not raw VRAM math.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn btn-primary" id="test-now-btn"
+         href="https://github.com/jashwanthsai678/CaniRunLLM/releases/latest/download/CanIRunLLM.exe">
+        Test Now — Download for Windows
+      </a>
+      <a class="btn btn-secondary" href="#install">Other install options</a>
+    </div>
+    <p class="hero-note">Free download &middot; no account &middot; runs entirely offline</p>
+  </section>
+
+  <section class="mock-panel">
+    <div class="mock-window">
+      <div class="mock-titlebar">
+        <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
+        <span class="mock-title">CanIRunLLM — Your Local AI Report</span>
+      </div>
+      <div class="mock-body">
+        <div class="mock-hero-line">Your computer can run <strong>14 models</strong> comfortably, and <strong>5 more</strong> with slower CPU/RAM offload.</div>
+        <div class="mock-best">
+          <div class="mock-best-label">Recommended for your hardware</div>
+          <div class="mock-best-name">Qwen3-8B-Q4_K_M</div>
+          <div class="mock-best-check">✓ Runs comfortably</div>
+        </div>
+        <div class="mock-buckets">
+          <div class="mock-bucket"><span class="dot dot-green"></span> Can Run — 14</div>
+          <div class="mock-bucket"><span class="dot dot-yellow"></span> Can Run With Offload — 5</div>
+          <div class="mock-bucket"><span class="dot dot-red"></span> Cannot Run — 39</div>
+        </div>
+      </div>
+    </div>
+    <p class="mock-caption">An illustration of the local dashboard's layout — not a live screenshot.</p>
+  </section>
+
+  <section class="section" id="how-it-works">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Scan your hardware</div>
+        <div class="step-text">CPU, RAM, GPU, and VRAM — detected directly from your machine, nothing uploaded anywhere.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Evaluate real models</div>
+        <div class="step-text">Every model + quantization pair is checked for weight memory, KV cache growth, runtime overhead, and safety margin — not just file size.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Get a plain-language verdict</div>
+        <div class="step-text">"Runs comfortably," "Runs, but slower," or "Not enough resources" — each with the actual reasons, and an alternative model if one doesn't fit.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Drill down if you want</div>
+        <div class="step-text">Every number — VRAM, RAM, KV cache, confidence — is one click away behind a "Technical details" toggle.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <h2>What makes it different from a VRAM calculator</h2>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="feature-title">Quantization-aware</div>
+        <div class="feature-text">Q4_K_M, Q8_0, and more — the same model at different quantizations is treated as a genuinely different artifact, because it is one.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Multi-GPU done honestly</div>
+        <div class="feature-text">2×8GB GPUs are never silently treated as one 16GB pool — only combined when the runtime actually supports splitting across them.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Confidence, not false certainty</div>
+        <div class="feature-text">Every verdict comes with a confidence level, and estimated numbers are always labeled as estimates — never presented as measurements.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Local-first, always</div>
+        <div class="feature-text">No account, no cloud calls, no telemetry. Your hardware scan never leaves your machine.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="install">
+    <h2>Install</h2>
+
+    <div class="install-tabs">
+      <button class="install-tab active" data-tab="exe">Windows .exe</button>
+      <button class="install-tab" data-tab="pip">pip (any OS)</button>
+      <button class="install-tab" data-tab="source">From source</button>
+    </div>
+
+    <div class="install-panel" data-panel="exe">
+      <p>Download <code>CanIRunLLM.exe</code> and double-click it. A window opens showing your scan results, then opens the dashboard in your browser automatically.</p>
+      <a class="btn btn-primary" href="https://github.com/jashwanthsai678/CaniRunLLM/releases/latest/download/CanIRunLLM.exe">Download CanIRunLLM.exe</a>
+    </div>
+
+    <div class="install-panel" data-panel="pip" hidden>
+      <p>Requires Python 3.10+.</p>
+      <pre><code>pip install canirunllm
+canirunllm scan</code></pre>
+    </div>
+
+    <div class="install-panel" data-panel="source" hidden>
+      <pre><code>git clone https://github.com/jashwanthsai678/CaniRunLLM.git
+cd CaniRunLLM
+pip install -e .
+canirunllm scan</code></pre>
+    </div>
+  </section>
+
+  <section class="section privacy-section">
+    <div class="privacy-card">
+      🔒 CanIRunLLM does not upload your hardware information anywhere by
+      default. The scan, the model evaluation, and the dashboard all run
+      on your machine.
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <span>CanIRunLLM — MIT License</span>
+  <a href="https://github.com/jashwanthsai678/CaniRunLLM" target="_blank" rel="noopener">GitHub</a>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
