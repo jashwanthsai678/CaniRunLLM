@@ -35,6 +35,9 @@ dependencies = [
     "GPUtil>=1.4",
 ]
 
+[project.optional-dependencies]
+packaging = ["pyinstaller>=6.0"]
+
 [project.urls]
 Homepage = "https://github.com/jashwanthsai678/CaniRunLLM"
 Repository = "https://github.com/jashwanthsai678/CaniRunLLM"

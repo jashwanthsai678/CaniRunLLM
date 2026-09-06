@@ -6,3 +6,5 @@ __pycache__/
 
 dist/
 build/
+dist_exe/
+build_exe/
