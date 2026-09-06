@@ -11,15 +11,27 @@
 <header class="topbar">
   <div class="topbar-left">
     <span class="logo">CanIRunLLM</span>
-    <span class="tagline">Which local LLMs can you actually run?</span>
   </div>
   <div class="topbar-right">
-    <span id="scan-status" class="scan-status">Scanning...</span>
-    <button id="rescan-btn" class="btn btn-secondary">Rescan Hardware</button>
+    <span id="scan-status" class="scan-status">Checking your computer...</span>
+    <button id="rescan-btn" class="btn btn-secondary">Rescan</button>
   </div>
 </header>
 
 <main id="app">
+
+  <section class="hero" id="hero-panel">
+    <h1>Your Local AI Report</h1>
+    <p id="hero-summary" class="hero-summary skeleton">Analyzing your computer...</p>
+    <div class="hero-actions">
+      <button id="hero-see-models-btn" class="btn btn-primary">See your best models</button>
+    </div>
+  </section>
+
+  <section class="panel" id="best-for-you-panel" hidden>
+    <h2>Best For You</h2>
+    <div id="best-for-you-card"></div>
+  </section>
 
   <section class="panel" id="hardware-panel">
     <h2>Your System</h2>
@@ -28,60 +40,64 @@
     </div>
   </section>
 
-  <section class="panel" id="summary-panel">
-    <div id="summary-cards" class="summary-cards"></div>
-  </section>
-
-  <section class="panel" id="recommended-panel">
-    <h2>Recommended For Your Hardware</h2>
-    <div id="recommended-cards" class="recommended-cards"></div>
-  </section>
-
-  <section class="panel" id="table-panel">
-    <h2>Model Compatibility</h2>
-
-    <div class="table-controls">
-      <input id="search-input" type="text" placeholder="Search models..." class="search-input">
-
-      <select id="filter-verdict" class="filter-select">
-        <option value="">All verdicts</option>
-        <option value="CAN_RUN">CAN_RUN</option>
-        <option value="CAN_RUN_WITH_OFFLOAD">CAN_RUN_WITH_OFFLOAD</option>
-        <option value="NEEDS_VALIDATION">NEEDS_VALIDATION</option>
-        <option value="CANNOT_RUN">CANNOT_RUN</option>
-      </select>
-
-      <select id="filter-quant" class="filter-select">
-        <option value="">All quantizations</option>
-      </select>
-
-      <select id="filter-runtime" class="filter-select">
-        <option value="">All runtimes</option>
-      </select>
+  <section class="panel" id="models-panel">
+    <div class="models-panel-header">
+      <h2 id="models-heading">What Can I Run?</h2>
+      <button id="toggle-advanced-btn" class="btn btn-secondary">Advanced view</button>
     </div>
 
-    <div class="table-scroll">
-      <table id="model-table">
-        <thead>
-          <tr>
-            <th data-sort="name">Model</th>
-            <th data-sort="family">Family</th>
-            <th data-sort="parameters">Parameters</th>
-            <th data-sort="quantization">Quantization</th>
-            <th data-sort="runtime">Runtime</th>
-            <th data-sort="required_memory_bytes">Memory Required</th>
-            <th data-sort="memory_verdict">Memory</th>
-            <th data-sort="runtime_verdict">Runtime Verdict</th>
-            <th data-sort="overall_verdict">Verdict</th>
-            <th data-sort="confidence">Confidence</th>
-          </tr>
-        </thead>
-        <tbody id="model-table-body">
-          <tr><td colspan="10" class="skeleton">Loading models...</td></tr>
-        </tbody>
-      </table>
+    <div id="simple-view">
+      <div id="model-buckets"></div>
+    </div>
+
+    <div id="advanced-view" hidden>
+      <div class="table-controls">
+        <input id="search-input" type="text" placeholder="Search models..." class="search-input">
+
+        <select id="filter-verdict" class="filter-select">
+          <option value="">All verdicts</option>
+          <option value="CAN_RUN">Runs comfortably</option>
+          <option value="CAN_RUN_WITH_OFFLOAD">Runs, but slower</option>
+          <option value="NEEDS_VALIDATION">Needs more info</option>
+          <option value="CANNOT_RUN">Not enough resources</option>
+        </select>
+
+        <select id="filter-quant" class="filter-select">
+          <option value="">All quantizations</option>
+        </select>
+
+        <select id="filter-runtime" class="filter-select">
+          <option value="">All runtimes</option>
+        </select>
+      </div>
+
+      <div class="table-scroll">
+        <table id="model-table">
+          <thead>
+            <tr>
+              <th data-sort="name">Model</th>
+              <th data-sort="family">Family</th>
+              <th data-sort="parameters">Parameters</th>
+              <th data-sort="quantization">Quantization</th>
+              <th data-sort="runtime">Runtime</th>
+              <th data-sort="required_memory_bytes">Memory Required</th>
+              <th data-sort="memory_verdict">Memory</th>
+              <th data-sort="runtime_verdict">Runtime Verdict</th>
+              <th data-sort="overall_verdict">Verdict</th>
+              <th data-sort="confidence">Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="model-table-body">
+            <tr><td colspan="10" class="skeleton">Loading models...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
+
+  <footer class="privacy-banner">
+    🔒 Your hardware information stays on your computer. CanIRunLLM does not upload your hardware scan anywhere by default.
+  </footer>
 
 </main>
 

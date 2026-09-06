@@ -9,9 +9,24 @@
     filterVerdict: "",
     filterQuant: "",
     filterRuntime: "",
+    advancedView: false,
   };
 
   const GB = 1024 ** 3;
+
+  const BUCKETS = [
+    { key: "CAN_RUN", title: "Can Run", subtitle: "Comfortable" },
+    { key: "CAN_RUN_WITH_OFFLOAD", title: "Can Run With Offload", subtitle: "Possible, but slower" },
+    { key: "NEEDS_VALIDATION", title: "Needs Validation", subtitle: "More information needed" },
+    { key: "CANNOT_RUN", title: "Cannot Run", subtitle: "Not enough resources" },
+  ];
+
+  const ICON_GLYPH = {
+    check: "✓",
+    warn: "⚠",
+    unknown: "?",
+    cross: "✕",
+  };
 
   function bytesToGB(bytes) {
     if (bytes === null || bytes === undefined) return "-";
@@ -28,6 +43,19 @@
     return `<span class="badge badge-${verdict}">${verdict}</span>`;
   }
 
+  function verdictIcon(compat) {
+    return `<span class="verdict-icon icon-${compat.friendly_icon}">
+      <span class="glyph">${ICON_GLYPH[compat.friendly_icon] || ""}</span>
+      ${compat.friendly_verdict}
+    </span>`;
+  }
+
+  function reasonList(reasons) {
+    return `<ul class="reason-list">` +
+      reasons.map((r) => `<li class="${r.ok ? "r-ok" : "r-bad"}">${r.ok ? "✓" : "•"} ${r.text}</li>`).join("") +
+      `</ul>`;
+  }
+
   async function fetchJSON(url) {
     const res = await fetch(url);
     if (!res.ok) {
@@ -39,6 +67,60 @@
 
   function setScanStatus(text) {
     document.getElementById("scan-status").textContent = text;
+  }
+
+  function renderHero(scan) {
+    const summary = scan.summary;
+    const el = document.getElementById("hero-summary");
+
+    const comfortable = summary.can_run;
+    const offload = summary.can_run_with_offload;
+    const cannot = summary.cannot_run;
+
+    let sentence;
+
+    if (comfortable > 0) {
+      sentence = `Your computer can run <strong>${comfortable} model${comfortable === 1 ? "" : "s"}</strong> comfortably`;
+      if (offload > 0) sentence += `, and <strong>${offload} more</strong> with slower CPU/RAM offload`;
+      sentence += ".";
+    } else if (offload > 0) {
+      sentence = `Your computer can run <strong>${offload} model${offload === 1 ? "" : "s"}</strong> using CPU/RAM offload (expect slower performance). No models fit comfortably in GPU memory alone right now.`;
+    } else {
+      sentence = `None of the ${summary.total} models in this catalog currently fit your available memory. See "Cannot Run" below for why, and what might help.`;
+    }
+
+    if (cannot > 0 && (comfortable > 0 || offload > 0)) {
+      sentence += ` ${cannot} model${cannot === 1 ? "" : "s"} would need more memory than you currently have free.`;
+    }
+
+    el.innerHTML = sentence;
+    el.classList.remove("skeleton");
+  }
+
+  function renderBestForYou(bestForYou) {
+    const panel = document.getElementById("best-for-you-panel");
+    const container = document.getElementById("best-for-you-card");
+
+    if (!bestForYou) {
+      panel.hidden = true;
+      return;
+    }
+
+    panel.hidden = false;
+
+    const m = bestForYou.model;
+    const c = bestForYou.compatibility;
+
+    container.innerHTML = `
+      <div class="best-card model-card" data-model-id="${encodeURIComponent(m.name)}">
+        <div class="best-label">Recommended for your hardware</div>
+        <div class="best-name">${m.name}</div>
+        ${verdictIcon(c)}
+        ${reasonList(c.reasons)}
+        <div class="best-caveat">Compatibility-based recommendation — not yet benchmarked for real-world speed or quality.</div>
+      </div>`;
+
+    container.querySelector(".best-card").addEventListener("click", () => openDetail(encodeURIComponent(m.name)));
   }
 
   function renderHardware(hardware) {
@@ -75,7 +157,7 @@
         <div class="hw-card">
           <div class="hw-label">GPU</div>
           <div class="hw-value">No dedicated GPU detected</div>
-          <div class="hw-sub">CPU-only inference may still be possible.</div>
+          <div class="hw-sub">You can still run smaller local models using your CPU.</div>
         </div>`;
     } else {
       gpus.forEach((gpu, index) => {
@@ -97,7 +179,7 @@
         cards += `
           <div class="hw-card">
             <div class="hw-label">Note</div>
-            <div class="hw-sub">${gpus.length} GPUs detected. VRAM is evaluated per-GPU and combined only when a model's runtime supports multi-GPU distribution — it is never treated as one unified pool.</div>
+            <div class="hw-sub">${gpus.length} GPUs detected. VRAM is evaluated per-GPU and only combined when a model's runtime supports splitting across GPUs — never treated as one unified pool.</div>
           </div>`;
       }
     }
@@ -112,56 +194,43 @@
     grid.innerHTML = cards;
   }
 
-  function renderSummary(summary) {
-    const el = document.getElementById("summary-cards");
-    el.innerHTML = `
-      <div class="summary-card total">
-        <div class="num">${summary.total}</div>
-        <div class="label">Models Evaluated</div>
-      </div>
-      <div class="summary-card can-run">
-        <div class="num">${summary.can_run}</div>
-        <div class="label">Can Run</div>
-      </div>
-      <div class="summary-card offload">
-        <div class="num">${summary.can_run_with_offload}</div>
-        <div class="label">Can Run + Offload</div>
-      </div>
-      <div class="summary-card needs-validation">
-        <div class="num">${summary.needs_validation}</div>
-        <div class="label">Needs Validation</div>
-      </div>
-      <div class="summary-card cannot-run">
-        <div class="num">${summary.cannot_run}</div>
-        <div class="label">Cannot Run</div>
-      </div>`;
-  }
+  function renderBuckets(results) {
+    const container = document.getElementById("model-buckets");
 
-  function renderRecommended(recommended) {
-    const el = document.getElementById("recommended-cards");
+    let html = "";
 
-    if (!recommended || recommended.length === 0) {
-      el.innerHTML = `<div class="empty-note">No models currently rank as a good fit for this hardware.</div>`;
-      return;
-    }
+    BUCKETS.forEach((bucket) => {
+      const items = results.filter((r) => r.compatibility.overall_verdict === bucket.key);
 
-    el.innerHTML = recommended.map((entry) => {
-      const m = entry.model;
-      const c = entry.compatibility;
-      return `
-        <div class="model-card" data-model-id="${encodeURIComponent(m.name)}">
-          <div class="model-name">${m.name}</div>
-          ${badge(c.overall_verdict)}
-          <div class="model-meta">
-            Memory: ${bytesToGB(c.required_memory_bytes)}<br>
-            Runtime: ${m.runtime || "unknown"}<br>
-            Confidence: ${c.confidence}<br>
-            Performance: Not benchmarked
+      if (items.length === 0) return;
+
+      html += `
+        <div class="bucket">
+          <div class="bucket-header">
+            <span class="verdict-icon icon-${items[0].compatibility.friendly_icon}">
+              <span class="glyph">${ICON_GLYPH[items[0].compatibility.friendly_icon] || ""}</span>
+              ${bucket.title}
+            </span>
+            <span class="bucket-count">— ${bucket.subtitle} (${items.length})</span>
+          </div>
+          <div class="bucket-grid">
+            ${items.map((item) => `
+              <div class="bucket-card" data-model-id="${encodeURIComponent(item.model.name)}">
+                <div class="bucket-card-name">${item.model.name}</div>
+                <div class="bucket-card-meta">${formatParams(item.model.parameters)} &middot; ${item.model.quantization}</div>
+              </div>
+            `).join("")}
           </div>
         </div>`;
-    }).join("");
+    });
 
-    el.querySelectorAll(".model-card").forEach((card) => {
+    if (!html) {
+      html = `<div class="empty-note">No models found in the current catalog.</div>`;
+    }
+
+    container.innerHTML = html;
+
+    container.querySelectorAll(".bucket-card").forEach((card) => {
       card.addEventListener("click", () => openDetail(card.dataset.modelId));
     });
   }
@@ -282,54 +351,92 @@
       const c = detail.compatibility;
       const mem = detail.memory_breakdown;
 
-      content.innerHTML = `
+      let simpleSection = `
         <div class="detail-title">${m.name}</div>
         <div class="detail-family">${m.family} &middot; ${m.architecture}</div>
 
         <div class="detail-section">
-          <h3>Model</h3>
-          <div class="detail-row"><span class="k">Parameters</span><span class="v">${formatParams(m.parameters)}</span></div>
-          <div class="detail-row"><span class="k">Quantization</span><span class="v">${m.quantization}</span></div>
-          <div class="detail-row"><span class="k">Context Length</span><span class="v">${m.context_length.toLocaleString()}</span></div>
-          <div class="detail-row"><span class="k">Runtime</span><span class="v">${m.runtime || "unknown"}</span></div>
-          <div class="detail-row"><span class="k">File Size</span><span class="v">${m.file_size_bytes ? bytesToGB(m.file_size_bytes) : "unknown"}</span></div>
-        </div>
-
-        <div class="detail-section">
-          <h3>Memory Requirements</h3>
-          <div class="detail-row"><span class="k">Weights</span><span class="v">${bytesToGB(mem.weight_memory_bytes)}</span></div>
-          <div class="detail-row"><span class="k">KV Cache</span><span class="v">${bytesToGB(mem.kv_cache_bytes)}</span></div>
-          <div class="detail-row"><span class="k">Runtime Overhead</span><span class="v">${bytesToGB(mem.runtime_overhead_bytes)}</span></div>
-          <div class="detail-row"><span class="k">Safety Margin</span><span class="v">${bytesToGB(mem.safety_margin_bytes)}</span></div>
-          <div class="detail-row"><span class="k">Total Required</span><span class="v">${bytesToGB(mem.total_required_bytes)}</span></div>
-        </div>
-
-        <div class="detail-section">
-          <h3>Hardware</h3>
-          ${renderMemoryBar("GPU VRAM", c.required_memory_bytes, c.available_vram_bytes)}
-          ${renderMemoryBar("System RAM", c.required_memory_bytes, c.available_ram_bytes)}
-        </div>
-
-        <div class="detail-section">
-          <h3>Compatibility</h3>
-          <div class="detail-row"><span class="k">Memory Verdict</span><span class="v">${c.memory_verdict}</span></div>
-          <div class="detail-row"><span class="k">Memory Strategy</span><span class="v">${c.memory_strategy}</span></div>
-          <div class="detail-row"><span class="k">Runtime Verdict</span><span class="v">${c.runtime_verdict}</span></div>
-          <div class="detail-row"><span class="k">Overall Verdict</span><span class="v">${badge(c.overall_verdict)}</span></div>
-          <div class="detail-row"><span class="k">Confidence</span><span class="v">${c.confidence}</span></div>
-        </div>
-
-        <div class="detail-section">
-          <h3>Reason</h3>
-          <div class="detail-reason">${c.reason}</div>
-        </div>
-
-        <div class="detail-section">
-          <h3>Performance</h3>
-          <div class="detail-reason">Not benchmarked. This project does not fabricate performance numbers — a benchmark engine will populate this once it exists.</div>
+          ${verdictIcon(c)}
+          ${reasonList(c.reasons)}
         </div>`;
+
+      if (detail.alternative) {
+        simpleSection += `
+          <div class="detail-section">
+            <div class="alternative-box" data-model-id="${encodeURIComponent(detail.alternative.name)}">
+              <div class="alt-label">Try instead</div>
+              <div class="alt-name">${detail.alternative.name}</div>
+            </div>
+          </div>`;
+      }
+
+      if (detail.run_command) {
+        simpleSection += `
+          <div class="detail-section">
+            <h3>Run This Model</h3>
+            <div class="run-command-box">
+              <code>${detail.run_command.command}</code>
+            </div>
+            <div class="run-command-note">${detail.run_command.note}</div>
+          </div>`;
+      }
+
+      const technicalSection = `
+        <details class="tech-details">
+          <summary>Technical details</summary>
+
+          <div class="detail-section">
+            <h3>Model</h3>
+            <div class="detail-row"><span class="k">Parameters</span><span class="v">${formatParams(m.parameters)}</span></div>
+            <div class="detail-row"><span class="k">Quantization</span><span class="v">${m.quantization}</span></div>
+            <div class="detail-row"><span class="k">Context Length</span><span class="v">${m.context_length.toLocaleString()}</span></div>
+            <div class="detail-row"><span class="k">Runtime</span><span class="v">${m.runtime || "unknown"}</span></div>
+            <div class="detail-row"><span class="k">File Size</span><span class="v">${m.file_size_bytes ? bytesToGB(m.file_size_bytes) : "unknown"}</span></div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Memory Requirements</h3>
+            <div class="detail-row"><span class="k">Weights</span><span class="v">${bytesToGB(mem.weight_memory_bytes)}</span></div>
+            <div class="detail-row"><span class="k">KV Cache</span><span class="v">${bytesToGB(mem.kv_cache_bytes)}</span></div>
+            <div class="detail-row"><span class="k">Runtime Overhead</span><span class="v">${bytesToGB(mem.runtime_overhead_bytes)}</span></div>
+            <div class="detail-row"><span class="k">Safety Margin</span><span class="v">${bytesToGB(mem.safety_margin_bytes)}</span></div>
+            <div class="detail-row"><span class="k">Total Required</span><span class="v">${bytesToGB(mem.total_required_bytes)}</span></div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Hardware</h3>
+            ${renderMemoryBar("GPU VRAM", c.required_memory_bytes, c.available_vram_bytes)}
+            ${renderMemoryBar("System RAM", c.required_memory_bytes, c.available_ram_bytes)}
+          </div>
+
+          <div class="detail-section">
+            <h3>Compatibility</h3>
+            <div class="detail-row"><span class="k">Memory Verdict</span><span class="v">${c.memory_verdict}</span></div>
+            <div class="detail-row"><span class="k">Memory Strategy</span><span class="v">${c.memory_strategy}</span></div>
+            <div class="detail-row"><span class="k">Runtime Verdict</span><span class="v">${c.runtime_verdict}</span></div>
+            <div class="detail-row"><span class="k">Overall Verdict</span><span class="v">${badge(c.overall_verdict)}</span></div>
+            <div class="detail-row"><span class="k">Confidence</span><span class="v">${c.confidence}</span></div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Reason (raw)</h3>
+            <div class="detail-reason">${c.reason}</div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Performance</h3>
+            <div class="detail-reason">Not benchmarked. This project does not fabricate performance numbers — a benchmark engine will populate this once it exists.</div>
+          </div>
+        </details>`;
+
+      content.innerHTML = simpleSection + technicalSection;
+
+      const altBox = content.querySelector(".alternative-box");
+      if (altBox) {
+        altBox.addEventListener("click", () => openDetail(altBox.dataset.modelId));
+      }
     } catch (err) {
-      content.innerHTML = `<div class="detail-reason">Could not load model details: ${err.message}</div>`;
+      content.innerHTML = `<div class="detail-reason">We couldn't load details for this model.<br>Reason: ${err.message}</div>`;
     }
   }
 
@@ -342,27 +449,51 @@
     }
   }
 
+  function updateViewToggle() {
+    document.getElementById("simple-view").hidden = state.advancedView;
+    document.getElementById("advanced-view").hidden = !state.advancedView;
+    document.getElementById("toggle-advanced-btn").textContent =
+      state.advancedView ? "Simple view" : "Advanced view";
+    document.getElementById("models-heading").textContent =
+      state.advancedView ? "All Models" : "What Can I Run?";
+  }
+
   async function loadScan() {
-    setScanStatus("Scanning hardware...");
+    setScanStatus("Checking your computer...");
 
     try {
       const scan = await fetchJSON("/api/scan");
       state.scan = scan;
 
+      renderHero(scan);
+      renderBestForYou(scan.best_for_you);
       renderHardware(scan.hardware);
-      renderSummary(scan.summary);
-      renderRecommended(scan.recommended);
+      renderBuckets(scan.results);
       populateFilterOptions(scan.results);
       renderTable();
 
       setScanStatus(`● Scanned ${formatScanTime(scan.scanned_at)} — ${scan.summary.total} models evaluated`);
     } catch (err) {
       setScanStatus(`Scan failed: ${err.message}`);
+      document.getElementById("hero-summary").textContent =
+        "We couldn't finish checking your computer. Try rescanning.";
     }
   }
 
   function setupControls() {
     document.getElementById("rescan-btn").addEventListener("click", loadScan);
+
+    document.getElementById("hero-see-models-btn").addEventListener("click", () => {
+      const target = document.getElementById("best-for-you-panel").hidden
+        ? document.getElementById("models-panel")
+        : document.getElementById("best-for-you-panel");
+      target.scrollIntoView({ behavior: "smooth" });
+    });
+
+    document.getElementById("toggle-advanced-btn").addEventListener("click", () => {
+      state.advancedView = !state.advancedView;
+      updateViewToggle();
+    });
 
     document.getElementById("search-input").addEventListener("input", (e) => {
       state.search = e.target.value;
@@ -410,6 +541,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     setupControls();
+    updateViewToggle();
     loadScan();
   });
 })();

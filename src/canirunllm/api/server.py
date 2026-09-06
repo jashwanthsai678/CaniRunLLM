@@ -19,8 +19,16 @@ from canirunllm.compatibility.engine import (
 from canirunllm.compatibility.decision import OverallVerdict
 from canirunllm.compatibility.requirements import estimate_memory_requirement
 
-from canirunllm.recommendation.engine import rank_models
+from canirunllm.recommendation.engine import rank_models, RankedModel
 from canirunllm.recommendation.tier import RecommendationTier
+
+from canirunllm.api.presentation import (
+    friendly_verdict,
+    build_reasons,
+    build_run_command,
+    pick_best_for_you,
+    pick_alternative,
+)
 
 from canirunllm.api.schemas import (
     CPUResponse,
@@ -29,11 +37,13 @@ from canirunllm.api.schemas import (
     OSResponse,
     HardwareResponse,
     ModelResponse,
+    ReasonItemResponse,
     CompatibilityResponse,
     ModelResultResponse,
     SummaryResponse,
     ScanResponse,
     MemoryBreakdownResponse,
+    RunCommandResponse,
     ModelDetailResponse,
 )
 
@@ -81,8 +91,12 @@ def _model_to_response(model: ModelSpec) -> ModelResponse:
 
 
 def _compatibility_to_response(
+    model: ModelSpec,
     compatibility: CompatibilityResult,
 ) -> CompatibilityResponse:
+
+    label, icon = friendly_verdict(compatibility.overall_verdict)
+
     return CompatibilityResponse(
         memory_verdict=compatibility.memory_verdict.value,
         runtime_verdict=compatibility.runtime_verdict.value,
@@ -93,13 +107,26 @@ def _compatibility_to_response(
         available_vram_bytes=compatibility.available_vram_bytes,
         available_ram_bytes=compatibility.available_ram_bytes,
         reason=compatibility.reason,
+        friendly_verdict=label,
+        friendly_icon=icon,
+        reasons=[
+            ReasonItemResponse(ok=item.ok, text=item.text)
+            for item in build_reasons(model, compatibility)
+        ],
     )
 
 
 def _result_to_response(item: ModelCheckResult) -> ModelResultResponse:
     return ModelResultResponse(
         model=_model_to_response(item.model),
-        compatibility=_compatibility_to_response(item.compatibility),
+        compatibility=_compatibility_to_response(item.model, item.compatibility),
+    )
+
+
+def _ranked_to_response(entry: RankedModel) -> ModelResultResponse:
+    return ModelResultResponse(
+        model=_model_to_response(entry.model),
+        compatibility=_compatibility_to_response(entry.model, entry.compatibility),
     )
 
 
@@ -172,19 +199,22 @@ def get_scan():
     ranked = rank_models(results)
 
     recommended = [
-        ModelResultResponse(
-            model=_model_to_response(entry.model),
-            compatibility=_compatibility_to_response(entry.compatibility),
-        )
+        _ranked_to_response(entry)
         for entry in ranked
         if entry.tier in RECOMMENDED_TIERS
     ][:MAX_RECOMMENDED]
+
+    best_entry = pick_best_for_you(ranked)
+    best_for_you = (
+        _ranked_to_response(best_entry) if best_entry is not None else None
+    )
 
     return ScanResponse(
         hardware=_hardware_to_response(hardware),
         summary=_build_summary(results),
         results=[_result_to_response(item) for item in results],
         recommended=recommended,
+        best_for_you=best_for_you,
         scanned_at=datetime.now(timezone.utc).isoformat(),
     )
 
@@ -205,9 +235,39 @@ def get_model_detail(model_id: str):
     compatibility = check_compatibility(hardware, model)
     requirement = estimate_memory_requirement(model)
 
+    run_command = build_run_command(model)
+    run_command_response = (
+        RunCommandResponse(
+            runtime=run_command.runtime,
+            command=run_command.command,
+            note=run_command.note,
+        )
+        if run_command is not None
+        else None
+    )
+
+    alternative_response = None
+
+    if compatibility.overall_verdict == OverallVerdict.CANNOT_RUN:
+
+        all_models = _service.resolver.resolve_all()
+        all_results = [
+            ModelCheckResult(
+                model=other_model,
+                compatibility=check_compatibility(hardware, other_model),
+            )
+            for other_model in all_models
+        ]
+        ranked = rank_models(all_results)
+
+        alternative_model = pick_alternative(ranked, exclude_model_name=model.name)
+
+        if alternative_model is not None:
+            alternative_response = _model_to_response(alternative_model)
+
     return ModelDetailResponse(
         model=_model_to_response(model),
-        compatibility=_compatibility_to_response(compatibility),
+        compatibility=_compatibility_to_response(model, compatibility),
         memory_breakdown=MemoryBreakdownResponse(
             weight_memory_bytes=requirement.weight_memory_bytes,
             kv_cache_bytes=requirement.kv_cache_bytes,
@@ -215,6 +275,8 @@ def get_model_detail(model_id: str):
             safety_margin_bytes=requirement.safety_margin_bytes,
             total_required_bytes=requirement.total_required_bytes,
         ),
+        run_command=run_command_response,
+        alternative=alternative_response,
     )
 
 

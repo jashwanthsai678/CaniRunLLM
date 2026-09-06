@@ -128,6 +128,68 @@ def test_model_detail_unknown_model_returns_404():
     assert response.status_code == 404
 
 
+def test_compatibility_includes_friendly_language():
+
+    response = client.get("/api/models")
+    data = response.json()
+
+    for entry in data:
+        compat = entry["compatibility"]
+        assert compat["friendly_verdict"]
+        assert compat["friendly_icon"] in {"check", "warn", "unknown", "cross"}
+        assert isinstance(compat["reasons"], list)
+        assert len(compat["reasons"]) > 0
+        for reason in compat["reasons"]:
+            assert "ok" in reason
+            assert reason["text"]
+
+
+def test_scan_best_for_you_is_consistent_with_summary():
+
+    response = client.get("/api/scan")
+    data = response.json()
+
+    best = data["best_for_you"]
+    favorable_total = (
+        data["summary"]["can_run"] + data["summary"]["can_run_with_offload"]
+    )
+
+    if favorable_total == 0:
+        assert best is None
+    else:
+        assert best is not None
+        assert best["compatibility"]["overall_verdict"] in (
+            "CAN_RUN",
+            "CAN_RUN_WITH_OFFLOAD",
+        )
+
+
+def test_model_detail_run_command_present_for_llama_cpp_models():
+
+    known_models = get_known_models()
+    llama_cpp_model = next(m for m in known_models if m.runtime == "llama.cpp")
+
+    response = client.get(f"/api/models/{llama_cpp_model.name}")
+    data = response.json()
+
+    assert data["run_command"] is not None
+    assert data["run_command"]["runtime"] == "llama.cpp"
+    assert llama_cpp_model.name in data["run_command"]["command"]
+
+
+def test_model_detail_alternative_only_present_when_cannot_run():
+
+    known_models = get_known_models()
+
+    for model in known_models:
+
+        response = client.get(f"/api/models/{model.name}")
+        data = response.json()
+
+        if data["compatibility"]["overall_verdict"] != "CANNOT_RUN":
+            assert data["alternative"] is None
+
+
 def test_index_serves_html():
 
     response = client.get("/")

@@ -49,6 +49,11 @@ class ModelResponse(BaseModel):
     file_size_bytes: int | None
 
 
+class ReasonItemResponse(BaseModel):
+    ok: bool
+    text: str
+
+
 class CompatibilityResponse(BaseModel):
     memory_verdict: str
     runtime_verdict: str
@@ -59,6 +64,12 @@ class CompatibilityResponse(BaseModel):
     available_vram_bytes: int
     available_ram_bytes: int
     reason: str
+
+    # Human-facing interpretation of the fields above — generated
+    # server-side (see api/presentation.py), never in the frontend.
+    friendly_verdict: str
+    friendly_icon: str
+    reasons: list[ReasonItemResponse]
 
 
 class ModelResultResponse(BaseModel):
@@ -79,6 +90,7 @@ class ScanResponse(BaseModel):
     summary: SummaryResponse
     results: list[ModelResultResponse]
     recommended: list[ModelResultResponse]
+    best_for_you: ModelResultResponse | None
     scanned_at: str
 
 
@@ -90,7 +102,15 @@ class MemoryBreakdownResponse(BaseModel):
     total_required_bytes: int
 
 
+class RunCommandResponse(BaseModel):
+    runtime: str
+    command: str
+    note: str
+
+
 class ModelDetailResponse(BaseModel):
     model: ModelResponse
     compatibility: CompatibilityResponse
     memory_breakdown: MemoryBreakdownResponse
+    run_command: RunCommandResponse | None
+    alternative: ModelResponse | None

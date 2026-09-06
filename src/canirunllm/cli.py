@@ -1,6 +1,7 @@
 import sys
 
 from canirunllm.application.scanner_service import ScannerService
+from canirunllm.compatibility.decision import OverallVerdict
 from canirunllm.web.launcher import run_dashboard, DEFAULT_PORT
 
 
@@ -26,98 +27,148 @@ def main():
 
     if command == "scan":
 
+        technical = "--technical" in sys.argv[2:]
+        no_browser = "--no-browser" in sys.argv[2:]
+
+        print("CanIRunLLM")
+        print()
+        print("Checking your computer...")
+
         hardware, results = service.scan()
 
-        print("Can I Run LLM?")
-        print("=" * 40)
+        print("  CPU detected")
+        print("  RAM detected")
+
+        if hardware.gpus:
+            print("  GPU detected")
+            print("  VRAM detected")
+        else:
+            print("  No dedicated GPU detected (CPU-only mode)")
 
         print()
-        print("CPU")
-        print("-" * 40)
+        print("Analyzing local AI models...")
+        print(f"  {len(results)} models analyzed")
 
-        cpu = hardware.cpu
-
-        print(f"Name:           {cpu.name}")
-        print(f"Physical cores: {cpu.physical_cores}")
-        print(f"Logical cores:  {cpu.logical_cores}")
-
-        print()
-        print("RAM")
-        print("-" * 40)
-
-        memory = hardware.memory
-
-        print(
-            f"Total: "
-            f"{bytes_to_gb(memory.total_bytes):.2f} GB"
+        can_run = sum(
+            1 for item in results
+            if item.compatibility.overall_verdict == OverallVerdict.CAN_RUN
         )
-
-        print(
-            f"Available: "
-            f"{bytes_to_gb(memory.available_bytes):.2f} GB"
+        offload = sum(
+            1 for item in results
+            if item.compatibility.overall_verdict
+            == OverallVerdict.CAN_RUN_WITH_OFFLOAD
         )
 
         print()
-        print("GPU")
-        print("-" * 40)
 
-        gpus = hardware.gpus
-
-        if not gpus:
-            print("No supported GPU detected.")
-
-        for index, gpu in enumerate(gpus):
-
-            print(f"GPU {index}: {gpu.name}")
-
+        if can_run:
+            print(f"You can run {can_run} model(s) comfortably.")
+            if offload:
+                print(f"{offload} more can run with CPU/RAM offload (slower).")
+        elif offload:
+            print(f"You can run {offload} model(s) with CPU/RAM offload (slower).")
+        else:
             print(
-                f"  VRAM: "
-                f"{bytes_to_gb(gpu.memory_total_bytes):.2f} GB"
+                "None of the models in this catalog currently fit "
+                "your available memory."
             )
 
-            print(
-                f"  VRAM Free: "
-                f"{bytes_to_gb(gpu.memory_free_bytes):.2f} GB"
-            )
+        if not technical:
+            print()
+            print("Run with --technical to see the full hardware and "
+                  "compatibility breakdown here in the terminal.")
 
-            print(
-                f"  Utilization: "
-                f"{gpu.utilization_percent:.1f}%"
-            )
-
-        print()
-        print("Operating System")
-        print("-" * 40)
-
-        os_info = hardware.os
-
-        print(f"System:  {os_info.system}")
-        print(f"Release: {os_info.release}")
-
-        print()
-        print("MODEL COMPATIBILITY")
-        print("-" * 60)
-
-        for item in results:
-
-            model = item.model
-            result = item.compatibility
+        if technical:
 
             print()
-            print(model.name)
-            print(f"  Memory:     {result.memory_verdict.value}")
-            print(f"  Strategy:   {result.memory_strategy}")
-            print(f"  Runtime:    {result.runtime_verdict.value}")
-            print(f"  Verdict:    {result.overall_verdict.value}")
-            print(f"  Confidence: {result.confidence.value}")
+            print("Can I Run LLM?")
+            print("=" * 40)
 
-        no_browser = "--no-browser" in sys.argv[2:]
+            print()
+            print("CPU")
+            print("-" * 40)
+
+            cpu = hardware.cpu
+
+            print(f"Name:           {cpu.name}")
+            print(f"Physical cores: {cpu.physical_cores}")
+            print(f"Logical cores:  {cpu.logical_cores}")
+
+            print()
+            print("RAM")
+            print("-" * 40)
+
+            memory = hardware.memory
+
+            print(
+                f"Total: "
+                f"{bytes_to_gb(memory.total_bytes):.2f} GB"
+            )
+
+            print(
+                f"Available: "
+                f"{bytes_to_gb(memory.available_bytes):.2f} GB"
+            )
+
+            print()
+            print("GPU")
+            print("-" * 40)
+
+            gpus = hardware.gpus
+
+            if not gpus:
+                print("No supported GPU detected.")
+
+            for index, gpu in enumerate(gpus):
+
+                print(f"GPU {index}: {gpu.name}")
+
+                print(
+                    f"  VRAM: "
+                    f"{bytes_to_gb(gpu.memory_total_bytes):.2f} GB"
+                )
+
+                print(
+                    f"  VRAM Free: "
+                    f"{bytes_to_gb(gpu.memory_free_bytes):.2f} GB"
+                )
+
+                print(
+                    f"  Utilization: "
+                    f"{gpu.utilization_percent:.1f}%"
+                )
+
+            print()
+            print("Operating System")
+            print("-" * 40)
+
+            os_info = hardware.os
+
+            print(f"System:  {os_info.system}")
+            print(f"Release: {os_info.release}")
+
+            print()
+            print("MODEL COMPATIBILITY")
+            print("-" * 60)
+
+            for item in results:
+
+                model = item.model
+                result = item.compatibility
+
+                print()
+                print(model.name)
+                print(f"  Memory:     {result.memory_verdict.value}")
+                print(f"  Strategy:   {result.memory_strategy}")
+                print(f"  Runtime:    {result.runtime_verdict.value}")
+                print(f"  Verdict:    {result.overall_verdict.value}")
+                print(f"  Confidence: {result.confidence.value}")
 
         if no_browser:
             return
 
         print()
-        print("-" * 60)
+        print("Opening your local AI report...")
 
         run_dashboard(port=DEFAULT_PORT)
 
