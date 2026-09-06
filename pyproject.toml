@@ -15,3 +15,6 @@ canirunllm = "canirunllm.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"canirunllm.registry" = ["*.json"]
