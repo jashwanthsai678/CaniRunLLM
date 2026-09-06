@@ -36,13 +36,13 @@ def test_get_by_family():
     resolver = ModelResolver()
 
     results = resolver.get_by_family(
-        "Qwen3-27B"
+        "Qwen3-32B"
     )
 
     assert len(results) > 0
 
     for model in results:
-        assert model.family == "Qwen3-27B"
+        assert model.family == "Qwen3-32B"
 
 
 def test_get_by_family_no_match_returns_empty():
@@ -59,27 +59,27 @@ def test_get_variant():
     resolver = ModelResolver()
 
     model = resolver.get_variant(
-        "Qwen3-27B-Q4_K_M"
+        "Qwen3-32B-Q4_K_M"
     )
 
     assert model is not None
-    assert model.name == "Qwen3-27B-Q4_K_M"
+    assert model.name == "Qwen3-32B-Q4_K_M"
 
 
 def test_get_variant_is_case_insensitive():
 
     resolver = ModelResolver()
 
-    model = resolver.get_variant("qwen3-27b-q4_k_m")
+    model = resolver.get_variant("qwen3-32b-q4_k_m")
 
     assert model is not None
-    assert model.name == "Qwen3-27B-Q4_K_M"
+    assert model.name == "Qwen3-32B-Q4_K_M"
 
 
 def test_get_variant_does_not_match_family_only():
 
     resolver = ModelResolver()
 
-    model = resolver.get_variant("qwen3-27b")
+    model = resolver.get_variant("qwen3-32b")
 
     assert model is None

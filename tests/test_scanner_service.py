@@ -59,26 +59,26 @@ def test_check_variant_returns_single_model():
 
     service = ScannerService()
 
-    outcome = service.check("Qwen3-27B-Q4_K_M")
+    outcome = service.check("Qwen3-32B-Q4_K_M")
 
     assert outcome is not None
     assert outcome["type"] == "variant"
     assert len(outcome["models"]) == 1
-    assert outcome["models"][0].model.name == "Qwen3-27B-Q4_K_M"
+    assert outcome["models"][0].model.name == "Qwen3-32B-Q4_K_M"
 
 
 def test_check_family_returns_all_variants():
 
     service = ScannerService()
 
-    outcome = service.check("Qwen3-27B")
+    outcome = service.check("Qwen3-32B")
 
     assert outcome is not None
     assert outcome["type"] == "family"
     assert len(outcome["models"]) > 0
 
     for item in outcome["models"]:
-        assert item.model.family == "Qwen3-27B"
+        assert item.model.family == "Qwen3-32B"
 
 
 def test_check_unknown_returns_none():

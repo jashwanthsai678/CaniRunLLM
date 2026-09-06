@@ -8,7 +8,11 @@ version = "0.1.0"
 description = "Find out which open-source LLMs can run on your hardware."
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "pydantic>=2.0",
+]
 
 [project.scripts]
 canirunllm = "canirunllm.cli:main"
@@ -18,3 +22,4 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "canirunllm.registry" = ["*.json"]
+"canirunllm.web" = ["static/*", "templates/*"]

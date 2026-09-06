@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CanIRunLLM</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="logo">CanIRunLLM</span>
+    <span class="tagline">Which local LLMs can you actually run?</span>
+  </div>
+  <div class="topbar-right">
+    <span id="scan-status" class="scan-status">Scanning...</span>
+    <button id="rescan-btn" class="btn btn-secondary">Rescan Hardware</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <section class="panel" id="hardware-panel">
+    <h2>Your System</h2>
+    <div id="hardware-grid" class="hardware-grid">
+      <div class="skeleton">Loading hardware...</div>
+    </div>
+  </section>
+
+  <section class="panel" id="summary-panel">
+    <div id="summary-cards" class="summary-cards"></div>
+  </section>
+
+  <section class="panel" id="recommended-panel">
+    <h2>Recommended For Your Hardware</h2>
+    <div id="recommended-cards" class="recommended-cards"></div>
+  </section>
+
+  <section class="panel" id="table-panel">
+    <h2>Model Compatibility</h2>
+
+    <div class="table-controls">
+      <input id="search-input" type="text" placeholder="Search models..." class="search-input">
+
+      <select id="filter-verdict" class="filter-select">
+        <option value="">All verdicts</option>
+        <option value="CAN_RUN">CAN_RUN</option>
+        <option value="CAN_RUN_WITH_OFFLOAD">CAN_RUN_WITH_OFFLOAD</option>
+        <option value="NEEDS_VALIDATION">NEEDS_VALIDATION</option>
+        <option value="CANNOT_RUN">CANNOT_RUN</option>
+      </select>
+
+      <select id="filter-quant" class="filter-select">
+        <option value="">All quantizations</option>
+      </select>
+
+      <select id="filter-runtime" class="filter-select">
+        <option value="">All runtimes</option>
+      </select>
+    </div>
+
+    <div class="table-scroll">
+      <table id="model-table">
+        <thead>
+          <tr>
+            <th data-sort="name">Model</th>
+            <th data-sort="family">Family</th>
+            <th data-sort="parameters">Parameters</th>
+            <th data-sort="quantization">Quantization</th>
+            <th data-sort="runtime">Runtime</th>
+            <th data-sort="required_memory_bytes">Memory Required</th>
+            <th data-sort="memory_verdict">Memory</th>
+            <th data-sort="runtime_verdict">Runtime Verdict</th>
+            <th data-sort="overall_verdict">Verdict</th>
+            <th data-sort="confidence">Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="model-table-body">
+          <tr><td colspan="10" class="skeleton">Loading models...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<div id="detail-modal" class="modal-overlay" hidden>
+  <div class="modal">
+    <button id="modal-close" class="modal-close" aria-label="Close">&times;</button>
+    <div id="modal-content">Loading...</div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

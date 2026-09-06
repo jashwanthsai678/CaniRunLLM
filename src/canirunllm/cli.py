@@ -1,6 +1,7 @@
 import sys
 
 from canirunllm.application.scanner_service import ScannerService
+from canirunllm.web.launcher import run_dashboard, DEFAULT_PORT
 
 
 def bytes_to_gb(value):
@@ -13,6 +14,10 @@ def main():
         print()
         print("Usage:")
         print("  canirunllm scan")
+        print("  canirunllm search <query>")
+        print("  canirunllm check <model>")
+        print("  canirunllm recommend")
+        print("  canirunllm web")
         return
 
     command = sys.argv[1]
@@ -106,6 +111,16 @@ def main():
             print(f"  Verdict:    {result.overall_verdict.value}")
             print(f"  Confidence: {result.confidence.value}")
 
+        no_browser = "--no-browser" in sys.argv[2:]
+
+        if no_browser:
+            return
+
+        print()
+        print("-" * 60)
+
+        run_dashboard(port=DEFAULT_PORT)
+
     elif command == "search":
 
         if len(sys.argv) < 3:
@@ -127,7 +142,7 @@ def main():
 
         for model in models:
             print(
-                f"{model.name:<30}"
+                f"{model.name:<38}"
                 f"{model.quantization:<12}"
                 f"{model.runtime or 'unknown'}"
             )
@@ -189,7 +204,7 @@ def main():
             result = item.compatibility
 
             print(
-                f"{model.name:<30}"
+                f"{model.name:<38}"
                 f"{result.overall_verdict.value:<22}"
                 f"{result.confidence.value}"
             )
@@ -211,6 +226,19 @@ def main():
             print(f"  Verdict:    {entry.compatibility.overall_verdict.value}")
             print(f"  Strategy:   {entry.compatibility.memory_strategy}")
             print(f"  Confidence: {entry.compatibility.confidence.value}")
+
+    elif command == "web":
+
+        port = DEFAULT_PORT
+
+        if "--port" in sys.argv:
+            port_index = sys.argv.index("--port")
+            if port_index + 1 < len(sys.argv):
+                port = int(sys.argv[port_index + 1])
+
+        print("CanIRunLLM Dashboard")
+
+        run_dashboard(port=port)
 
     else:
         print(f"Unknown command: {command}")
