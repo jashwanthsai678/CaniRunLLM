@@ -242,6 +242,18 @@ main {
   text-align: center;
 }
 
+.why-content {
+  max-width: 680px;
+  margin: 0 auto;
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.why-content p { margin: 0 0 18px 0; }
+.why-content p:last-child { margin-bottom: 0; }
+.why-content strong { color: var(--text); }
+
 .steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

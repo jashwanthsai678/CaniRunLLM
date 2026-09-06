@@ -37,6 +37,26 @@ report, with the full technical breakdown (VRAM, RAM, KV cache, quantization,
 runtime, confidence) available behind a "Technical details" toggle for anyone
 who wants it.
 
+## Why this exists
+
+Open-weight models are closing the gap on proprietary ones fast, and running
+them locally means no API keys, no per-token bills, no vendor lock-in, and
+your data never leaving your machine. That future is arriving whether or not
+any single vendor cooperates.
+
+But "just run it locally" quietly assumes you already know which model fits
+your hardware, which quantization to use, whether it needs multi-GPU or
+CPU/RAM offloading, and which runtime actually supports that combination —
+and gets it wrong just as quietly, with an OOM crash or a model that
+technically loads but is unusably slow.
+
+CanIRunLLM exists to answer the question that actually matters before any of
+that: **given the machine you actually have, what should you run?** Not "is
+this hardware capable in theory," but "here's what you can run today, here's
+what you should pick, and here's why" — so local, open-weight models become
+something you can act on with confidence, not something you find out by
+trial and (expensive) error.
+
 ## Install
 
 Requires **Python 3.10 or newer**.
