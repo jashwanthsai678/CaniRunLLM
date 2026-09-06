@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/canirunllm/__init__.py
+src/canirunllm/cli.py
+src/canirunllm.egg-info/PKG-INFO
+src/canirunllm.egg-info/SOURCES.txt
+src/canirunllm.egg-info/dependency_links.txt
+src/canirunllm.egg-info/entry_points.txt
+src/canirunllm.egg-info/top_level.txt
+src/canirunllm/hardware/__init__.py
+src/canirunllm/hardware/cpu.py
+src/canirunllm/hardware/memory.py
+src/canirunllm/hardware/os.py
+src/canirunllm/hardware/scanner.py
+tests/test_hardware.py

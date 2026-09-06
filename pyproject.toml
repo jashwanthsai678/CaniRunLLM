@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "canirunllm"
+version = "0.1.0"
+description = "Find out which open-source LLMs can run on your hardware."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+canirunllm = "canirunllm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
