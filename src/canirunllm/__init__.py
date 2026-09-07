@@ -1,6 +1,13 @@
 import sys
+from importlib.metadata import PackageNotFoundError, version
 
-__version__ = "0.1.0"
+try:
+    # Single source of truth: pyproject.toml's [project] version, read
+    # from installed package metadata - never duplicated as a second
+    # hardcoded string that can silently drift out of sync with it.
+    __version__ = version("canirunllm")
+except PackageNotFoundError:
+    __version__ = "0.0.0-dev"
 
 if sys.version_info < (3, 10):
     raise RuntimeError(
