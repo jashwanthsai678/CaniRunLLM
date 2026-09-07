@@ -211,7 +211,7 @@ def test_scan_best_for_you_is_consistent_with_summary():
         )
 
 
-def test_model_detail_run_command_present_for_llama_cpp_models():
+def test_model_detail_run_commands_present_for_llama_cpp_models():
 
     known_models = get_known_models()
     llama_cpp_model = next(m for m in known_models if m.runtime == "llama.cpp")
@@ -219,9 +219,25 @@ def test_model_detail_run_command_present_for_llama_cpp_models():
     response = client.get(f"/api/models/{llama_cpp_model.name}")
     data = response.json()
 
-    assert data["run_command"] is not None
-    assert data["run_command"]["runtime"] == "llama.cpp"
-    assert llama_cpp_model.name in data["run_command"]["command"]
+    runtimes = [c["runtime"] for c in data["run_commands"]]
+
+    assert "llama.cpp" in runtimes
+    assert "Ollama" in runtimes
+
+    llama_cpp_entry = next(
+        c for c in data["run_commands"] if c["runtime"] == "llama.cpp"
+    )
+    assert llama_cpp_model.name in llama_cpp_entry["command"]
+
+
+def test_model_detail_ollama_uses_verified_tag_for_known_model():
+
+    response = client.get("/api/models/Qwen3-8B-Q4_K_M")
+    data = response.json()
+
+    ollama_entry = next(c for c in data["run_commands"] if c["runtime"] == "Ollama")
+
+    assert ollama_entry["command"] == "ollama run qwen3:8b-q4_K_M"
 
 
 def test_model_detail_alternative_only_present_when_cannot_run():

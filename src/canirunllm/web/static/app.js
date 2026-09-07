@@ -477,14 +477,19 @@
           </div>`;
       }
 
-      if (detail.run_command) {
+      if (detail.run_commands && detail.run_commands.length > 0) {
         simpleSection += `
           <div class="detail-section">
             <h3>Run This Model</h3>
-            <div class="run-command-box">
-              <code>${detail.run_command.command}</code>
-            </div>
-            <div class="run-command-note">${detail.run_command.note}</div>
+            ${detail.run_commands.map((rc) => `
+              <div class="run-option">
+                <div class="run-option-label">${rc.runtime}</div>
+                <div class="run-command-box">
+                  <code>${rc.command}</code>
+                </div>
+                <div class="run-command-note">${rc.note}</div>
+              </div>
+            `).join("")}
           </div>`;
       }
 

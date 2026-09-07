@@ -30,7 +30,7 @@ from canirunllm.performance.prediction import (
 from canirunllm.api.presentation import (
     friendly_verdict,
     build_reasons,
-    build_run_command,
+    build_run_commands,
     pick_best_for_you,
     pick_alternative,
 )
@@ -268,16 +268,14 @@ def get_model_detail(model_id: str):
     compatibility = check_compatibility(hardware, model)
     requirement = estimate_memory_requirement(model)
 
-    run_command = build_run_command(model)
-    run_command_response = (
+    run_commands_response = [
         RunCommandResponse(
-            runtime=run_command.runtime,
-            command=run_command.command,
-            note=run_command.note,
+            runtime=info.runtime,
+            command=info.command,
+            note=info.note,
         )
-        if run_command is not None
-        else None
-    )
+        for info in build_run_commands(model)
+    ]
 
     alternative_response = None
 
@@ -311,7 +309,7 @@ def get_model_detail(model_id: str):
             safety_margin_bytes=requirement.safety_margin_bytes,
             total_required_bytes=requirement.total_required_bytes,
         ),
-        run_command=run_command_response,
+        run_commands=run_commands_response,
         alternative=alternative_response,
     )
 

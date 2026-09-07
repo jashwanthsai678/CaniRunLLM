@@ -12,7 +12,7 @@ from canirunllm.performance.prediction import predict_performance
 from canirunllm.api.presentation import (
     friendly_verdict,
     build_reasons,
-    build_run_command,
+    build_run_commands,
     pick_best_for_you,
     pick_alternative,
 )
@@ -118,30 +118,57 @@ def test_unknown_runtime_reason_is_honest_about_uncertainty():
     assert any(not r.ok and "can't be fully confirmed" in r.text for r in reasons)
 
 
-def test_run_command_generated_for_llama_cpp():
+def test_run_commands_include_llama_cpp_and_ollama():
 
     model = make_model(runtime="llama.cpp")
 
-    info = build_run_command(model)
+    commands = build_run_commands(model)
 
-    assert info is not None
-    assert info.runtime == "llama.cpp"
-    assert model.name in info.command
-    assert "does not download or store model files" in info.note
+    runtimes = [c.runtime for c in commands]
+    assert "llama.cpp" in runtimes
+    assert "Ollama" in runtimes
+
+    llama_cpp_info = next(c for c in commands if c.runtime == "llama.cpp")
+    assert model.name in llama_cpp_info.command
+    assert "does not download or store model files" in llama_cpp_info.note
 
 
-def test_run_command_none_for_unknown_runtime():
+def test_run_commands_ollama_falls_back_honestly_for_unverified_model():
+
+    model = make_model(name="Not-A-Real-Registry-Model", runtime="llama.cpp")
+
+    commands = build_run_commands(model)
+
+    ollama_info = next(c for c in commands if c.runtime == "Ollama")
+
+    assert "ollama run" not in ollama_info.command
+    assert "search" in ollama_info.command
+    assert "haven't verified" in ollama_info.note
+
+
+def test_run_commands_ollama_uses_verified_tag_when_known():
+
+    model = make_model(name="Qwen3-8B-Q4_K_M", runtime="llama.cpp")
+
+    commands = build_run_commands(model)
+
+    ollama_info = next(c for c in commands if c.runtime == "Ollama")
+
+    assert ollama_info.command == "ollama run qwen3:8b-q4_K_M"
+
+
+def test_run_commands_empty_for_unknown_runtime():
 
     model = make_model(runtime="some-custom-runtime")
 
-    assert build_run_command(model) is None
+    assert build_run_commands(model) == []
 
 
-def test_run_command_none_when_runtime_missing():
+def test_run_commands_empty_when_runtime_missing():
 
     model = make_model(runtime=None)
 
-    assert build_run_command(model) is None
+    assert build_run_commands(model) == []
 
 
 def test_pick_best_for_you_returns_top_favorable_entry():

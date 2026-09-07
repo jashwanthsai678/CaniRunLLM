@@ -41,7 +41,7 @@ def get_bits_per_parameter(quantization: str) -> float:
     if quantization == "Q6":
         return 6
 
-    if quantization == "Q5":
+    if quantization in {"Q5", "Q5_K_M"}:
         return 5
 
     if quantization == "Q4":

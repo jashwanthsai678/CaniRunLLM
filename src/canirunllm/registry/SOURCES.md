@@ -456,6 +456,38 @@ values can be re-verified or updated later.
   both), and no ungated community mirror was found. Excluded rather
   than guess at architecture values.
 
+## Q5_K_M variants (Qwen3-8B, Mistral-7B-Instruct-v0.3, Llama-3.2-3B-Instruct, TinyLlama-1.1B-Chat-v1.0)
+
+- Added specifically to diversify the registry beyond Q4_K_M/Q8_0 (the
+  only two quantizations previously present). Architecture fields
+  (layers, KV heads, head dim, context length) are copied from the
+  already-verified entries for the same family, since quantization
+  does not change model architecture, only weight precision.
+- `file_size_bytes`: from
+  https://huggingface.co/Qwen/Qwen3-8B-GGUF (Q5_K_M = 5.85 GB),
+  https://huggingface.co/bartowski/Mistral-7B-Instruct-v0.3-GGUF
+  (Q5_K_M = 5.14 GB),
+  https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF
+  (Q5_K_M = 2.32 GB), and
+  https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF
+  (Q5_K_M = 783 MB).
+
+## Ollama run commands (api/presentation.py, not models.json)
+
+Separate from the registry data above: `_OLLAMA_TAGS` in
+`api/presentation.py` maps specific registry entry names to verified
+Ollama library tags, checked directly against
+`https://ollama.com/library/<family>/tags` for: Qwen3 (4B/8B/14B/32B),
+Qwen2.5 (0.5B/1.5B), Qwen2.5-Coder-7B, Llama-3.1-8B-Instruct,
+Llama-3.2 (1B/3B)-Instruct, Mistral-7B-Instruct-v0.3, Gemma-2-9B-it,
+Gemma-3-4B-it, Phi-3.5-mini-instruct, Phi-4, DeepSeek-R1-Distill-
+Llama-8B, and TinyLlama-1.1B-Chat-v1.0. Every other registry entry
+gets an honest "search the Ollama library yourself" fallback instead
+of a guessed tag — Ollama's tag naming conventions differ enough
+between organizations (some use `-instruct-`, some `-it-`, some
+`-mini-instruct-`, some no suffix at all before the quantization)
+that a tag cannot be safely derived mechanically from a family name.
+
 ## Fields NOT independently verified
 
 - `kv_cache_dtype_bits: 16` for every entry is an assumption

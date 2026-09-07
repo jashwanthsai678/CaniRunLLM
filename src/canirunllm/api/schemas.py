@@ -130,5 +130,5 @@ class ModelDetailResponse(BaseModel):
     compatibility: CompatibilityResponse
     performance: PerformanceResponse
     memory_breakdown: MemoryBreakdownResponse
-    run_command: RunCommandResponse | None
+    run_commands: list[RunCommandResponse]
     alternative: ModelResponse | None

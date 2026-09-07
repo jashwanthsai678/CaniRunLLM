@@ -124,40 +124,108 @@ def build_reasons(
     return reasons
 
 
-# Command templates for runtimes this tool actually knows about. These
-# are illustrative examples, not verified working commands — this tool
-# does not download, store, or locate model files on disk.
-_RUNTIME_COMMAND_TEMPLATES: dict[str, tuple[str, str]] = {
-    "llama.cpp": (
-        "llama-cli -m /path/to/{filename} -c {context_length}",
-        "Point this at the GGUF file you've downloaded for this "
-        "model - this tool does not download or store model files.",
-    ),
+# Verified Ollama tags for specific registry entries — checked directly
+# against https://ollama.com/library/<family>/tags at the time these
+# were added. Only models actually confirmed here get an exact "ollama
+# run" command; everything else gets an honest "search the library"
+# fallback instead of a guessed tag. Ollama tag naming does not
+# reliably match this project's model names (different orgs use
+# "-instruct-", "-it-", "-mini-instruct-", or nothing at all before
+# the quantization suffix), so this cannot be derived mechanically.
+_OLLAMA_TAGS: dict[str, str] = {
+    "Qwen3-4B-Q4_K_M": "qwen3:4b-q4_K_M",
+    "Qwen3-4B-Q8_0": "qwen3:4b-q8_0",
+    "Qwen3-8B-Q4_K_M": "qwen3:8b-q4_K_M",
+    "Qwen3-8B-Q8_0": "qwen3:8b-q8_0",
+    "Qwen3-14B-Q4_K_M": "qwen3:14b-q4_K_M",
+    "Qwen3-14B-Q8_0": "qwen3:14b-q8_0",
+    "Qwen3-32B-Q4_K_M": "qwen3:32b-q4_K_M",
+    "Qwen3-32B-Q8_0": "qwen3:32b-q8_0",
+    "Qwen2.5-0.5B-Instruct-Q4_K_M": "qwen2.5:0.5b-instruct-q4_K_M",
+    "Qwen2.5-0.5B-Instruct-Q8_0": "qwen2.5:0.5b-instruct-q8_0",
+    "Qwen2.5-1.5B-Instruct-Q4_K_M": "qwen2.5:1.5b-instruct-q4_K_M",
+    "Qwen2.5-1.5B-Instruct-Q8_0": "qwen2.5:1.5b-instruct-q8_0",
+    "Qwen2.5-Coder-7B-Instruct-Q4_K_M": "qwen2.5-coder:7b-instruct-q4_K_M",
+    "Qwen2.5-Coder-7B-Instruct-Q8_0": "qwen2.5-coder:7b-instruct-q8_0",
+    "Llama-3.1-8B-Instruct-Q4_K_M": "llama3.1:8b-instruct-q4_K_M",
+    "Llama-3.1-8B-Instruct-Q8_0": "llama3.1:8b-instruct-q8_0",
+    "Llama-3.2-3B-Instruct-Q4_K_M": "llama3.2:3b-instruct-q4_K_M",
+    "Llama-3.2-3B-Instruct-Q8_0": "llama3.2:3b-instruct-q8_0",
+    "Llama-3.2-1B-Instruct-Q4_K_M": "llama3.2:1b-instruct-q4_K_M",
+    "Llama-3.2-1B-Instruct-Q8_0": "llama3.2:1b-instruct-q8_0",
+    "Mistral-7B-Instruct-v0.3-Q4_K_M": "mistral:7b-instruct-q4_K_M",
+    "Mistral-7B-Instruct-v0.3-Q8_0": "mistral:7b-instruct-q8_0",
+    "Gemma-2-9B-it-Q4_K_M": "gemma2:9b-instruct-q4_K_M",
+    "Gemma-2-9B-it-Q8_0": "gemma2:9b-instruct-q8_0",
+    "Gemma-3-4B-it-Q4_K_M": "gemma3:4b-it-q4_K_M",
+    "Gemma-3-4B-it-Q8_0": "gemma3:4b-it-q8_0",
+    "Phi-3.5-mini-instruct-Q4_K_M": "phi3.5:3.8b-mini-instruct-q4_K_M",
+    "Phi-3.5-mini-instruct-Q8_0": "phi3.5:3.8b-mini-instruct-q8_0",
+    "Phi-4-Q4_K_M": "phi4:14b-q4_K_M",
+    "Phi-4-Q8_0": "phi4:14b-q8_0",
+    "DeepSeek-R1-Distill-Llama-8B-Q4_K_M": "deepseek-r1:8b-llama-distill-q4_K_M",
+    "DeepSeek-R1-Distill-Llama-8B-Q8_0": "deepseek-r1:8b-llama-distill-q8_0",
+    "TinyLlama-1.1B-Chat-v1.0-Q4_K_M": "tinyllama:1.1b-chat-v1-q4_K_M",
+    "TinyLlama-1.1B-Chat-v1.0-Q8_0": "tinyllama:1.1b-chat-v1-q8_0",
 }
 
 
-def build_run_command(model: ModelSpec) -> RunCommandInfo | None:
-
-    if model.runtime is None:
-        return None
-
-    template = _RUNTIME_COMMAND_TEMPLATES.get(model.runtime.lower())
-
-    if template is None:
-        return None
-
-    command_template, note = template
-
-    command = command_template.format(
-        filename=f"{model.name}.gguf",
-        context_length=model.context_length,
+def _build_llama_cpp_command(model: ModelSpec) -> RunCommandInfo:
+    return RunCommandInfo(
+        runtime="llama.cpp",
+        command=f"llama-cli -m /path/to/{model.name}.gguf -c {model.context_length}",
+        note=(
+            "Point this at the GGUF file you've downloaded for this "
+            "model - this tool does not download or store model files."
+        ),
     )
+
+
+def _build_ollama_command(model: ModelSpec) -> RunCommandInfo:
+
+    tag = _OLLAMA_TAGS.get(model.name)
+
+    if tag is not None:
+        return RunCommandInfo(
+            runtime="Ollama",
+            command=f"ollama run {tag}",
+            note=(
+                "Downloads automatically the first time you run this "
+                "command, if you don't already have it. Requires "
+                "Ollama installed (ollama.com)."
+            ),
+        )
+
+    family_query = model.family.lower().replace(" ", "-")
 
     return RunCommandInfo(
-        runtime=model.runtime,
-        command=command,
-        note=note,
+        runtime="Ollama",
+        command=f"# search: https://ollama.com/search?q={family_query}",
+        note=(
+            "We haven't verified an exact Ollama tag for this specific "
+            "model/quantization - search the library above to check "
+            "what's available and confirm the closest match yourself."
+        ),
     )
+
+
+def build_run_commands(model: ModelSpec) -> list[RunCommandInfo]:
+    """One entry per runtime this tool can give real guidance for.
+
+    Never silently omitted: even an unverified Ollama match still
+    returns an honest "go check" entry rather than nothing at all,
+    so the user always has a concrete next step.
+    """
+
+    commands: list[RunCommandInfo] = []
+
+    if model.runtime is not None and model.runtime.lower() == "llama.cpp":
+        commands.append(_build_llama_cpp_command(model))
+        # Any llama.cpp-compatible GGUF model is also a candidate for
+        # Ollama, which runs on the same underlying engine.
+        commands.append(_build_ollama_command(model))
+
+    return commands
 
 
 def pick_best_for_you(ranked: list[RankedModel]) -> RankedModel | None:

@@ -810,5 +810,61 @@
     "head_dim": 128,
     "kv_cache_dtype_bits": 16,
     "file_size_bytes": 10726680821
+  },
+  {
+    "name": "Qwen3-8B-Q5_K_M",
+    "family": "Qwen3-8B",
+    "parameters": 8200000000,
+    "architecture": "Qwen3",
+    "quantization": "Q5_K_M",
+    "context_length": 32768,
+    "runtime": "llama.cpp",
+    "num_layers": 36,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 6281389670
+  },
+  {
+    "name": "Mistral-7B-Instruct-v0.3-Q5_K_M",
+    "family": "Mistral-7B-Instruct-v0.3",
+    "parameters": 7300000000,
+    "architecture": "Mistral",
+    "quantization": "Q5_K_M",
+    "context_length": 32768,
+    "runtime": "llama.cpp",
+    "num_layers": 32,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 5519032975
+  },
+  {
+    "name": "Llama-3.2-3B-Instruct-Q5_K_M",
+    "family": "Llama-3.2-3B-Instruct",
+    "parameters": 3210000000,
+    "architecture": "Llama",
+    "quantization": "Q5_K_M",
+    "context_length": 131072,
+    "runtime": "llama.cpp",
+    "num_layers": 28,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 2491081031
+  },
+  {
+    "name": "TinyLlama-1.1B-Chat-v1.0-Q5_K_M",
+    "family": "TinyLlama-1.1B-Chat-v1.0",
+    "parameters": 1100000000,
+    "architecture": "Llama",
+    "quantization": "Q5_K_M",
+    "context_length": 2048,
+    "runtime": "llama.cpp",
+    "num_layers": 22,
+    "num_kv_heads": 4,
+    "head_dim": 64,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 821035008
   }
 ]
