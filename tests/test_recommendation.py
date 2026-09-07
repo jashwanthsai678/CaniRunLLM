@@ -231,3 +231,39 @@ def test_rank_models_orders_by_headroom_within_same_tier():
         "Generous",
         "Tight",
     ]
+
+
+def test_rank_models_attaches_a_performance_prediction():
+
+    runnable = ModelCheckResult(
+        model=make_model("Runnable"),
+        compatibility=make_result(
+            OverallVerdict.CAN_RUN,
+            MemoryVerdict.FIT,
+            "SINGLE_GPU",
+            required_gb=5,
+            available_vram_gb=10,
+        ),
+    )
+
+    cannot_run = ModelCheckResult(
+        model=make_model("Impossible"),
+        compatibility=make_result(
+            OverallVerdict.CANNOT_RUN,
+            MemoryVerdict.NO_FIT,
+            "NONE",
+            required_gb=40,
+            available_vram_gb=8,
+        ),
+    )
+
+    ranked = rank_models([runnable, cannot_run])
+
+    by_name = {entry.model.name: entry for entry in ranked}
+
+    assert by_name["Runnable"].performance is not None
+    assert by_name["Runnable"].performance.generation_speed is not None
+    assert by_name["Runnable"].performance.generation_speed.low > 0
+
+    assert by_name["Impossible"].performance is not None
+    assert by_name["Impossible"].performance.generation_speed is None

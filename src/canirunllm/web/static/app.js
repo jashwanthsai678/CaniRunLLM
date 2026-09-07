@@ -56,6 +56,18 @@
       `</ul>`;
   }
 
+  function formatSpeedRange(performance) {
+    if (!performance || !performance.generation_speed) return "n/a";
+    const s = performance.generation_speed;
+    return `~${Math.round(s.low)}-${Math.round(s.high)} ${s.unit}`;
+  }
+
+  function midpointSpeed(performance) {
+    if (!performance || !performance.generation_speed) return -1;
+    const s = performance.generation_speed;
+    return (s.low + s.high) / 2;
+  }
+
   async function fetchJSON(url) {
     const res = await fetch(url);
     if (!res.ok) {
@@ -111,16 +123,106 @@
     const m = bestForYou.model;
     const c = bestForYou.compatibility;
 
+    const p = bestForYou.performance;
+
     container.innerHTML = `
       <div class="best-card model-card" data-model-id="${encodeURIComponent(m.name)}">
         <div class="best-label">Recommended for your hardware</div>
         <div class="best-name">${m.name}</div>
         ${verdictIcon(c)}
+        <div class="model-meta">Estimated speed: ${formatSpeedRange(p)}</div>
         ${reasonList(c.reasons)}
         <div class="best-caveat">Compatibility-based recommendation — not yet benchmarked for real-world speed or quality.</div>
       </div>`;
 
     container.querySelector(".best-card").addEventListener("click", () => openDetail(encodeURIComponent(m.name)));
+  }
+
+  function renderVerdictChart(summary) {
+    const panel = document.getElementById("overview-chart-panel");
+    const container = document.getElementById("verdict-chart");
+
+    const segments = [
+      { key: "CAN_RUN", label: "Can Run", count: summary.can_run },
+      { key: "CAN_RUN_WITH_OFFLOAD", label: "Can Run With Offload", count: summary.can_run_with_offload },
+      { key: "NEEDS_VALIDATION", label: "Needs Validation", count: summary.needs_validation },
+      { key: "CANNOT_RUN", label: "Cannot Run", count: summary.cannot_run },
+    ];
+
+    if (summary.total === 0) {
+      panel.hidden = true;
+      return;
+    }
+
+    panel.hidden = false;
+
+    const bar = segments
+      .filter((s) => s.count > 0)
+      .map((s) => {
+        const percent = (s.count / summary.total) * 100;
+        return `<div class="verdict-segment seg-${s.key}" style="width:${percent}%" title="${s.label}: ${s.count}">${percent >= 12 ? s.count : ""}</div>`;
+      })
+      .join("");
+
+    const legend = segments
+      .filter((s) => s.count > 0)
+      .map((s) => `
+        <div class="verdict-legend-item">
+          <span class="swatch seg-${s.key}"></span>
+          <strong>${s.count}</strong> ${s.label}
+        </div>
+      `)
+      .join("");
+
+    container.innerHTML = `
+      <div class="verdict-bar">${bar}</div>
+      <div class="verdict-legend">${legend}</div>`;
+  }
+
+  const MAX_THROUGHPUT_BARS = 15;
+
+  function renderThroughputChart(results) {
+    const panel = document.getElementById("throughput-chart-panel");
+    const container = document.getElementById("throughput-chart");
+
+    const runnable = results
+      .filter((r) => r.performance && r.performance.generation_speed)
+      .sort((a, b) => midpointSpeed(b.performance) - midpointSpeed(a.performance));
+
+    if (runnable.length === 0) {
+      panel.hidden = true;
+      return;
+    }
+
+    panel.hidden = false;
+
+    const shown = runnable.slice(0, MAX_THROUGHPUT_BARS);
+    const maxHigh = Math.max(...shown.map((r) => r.performance.generation_speed.high));
+
+    const rows = shown.map((r) => {
+      const speed = r.performance.generation_speed;
+      const lowPercent = (speed.low / maxHigh) * 100;
+      const widthPercent = ((speed.high - speed.low) / maxHigh) * 100;
+
+      return `
+        <div class="throughput-row" data-model-id="${encodeURIComponent(r.model.name)}" title="${r.model.name}: ${formatSpeedRange(r.performance)}">
+          <div class="tp-name">${r.model.name}</div>
+          <div class="throughput-track">
+            <div class="throughput-fill" style="left:${lowPercent}%; width:${Math.max(widthPercent, 1.5)}%"></div>
+          </div>
+          <div class="tp-value">${formatSpeedRange(r.performance)}</div>
+        </div>`;
+    }).join("");
+
+    container.innerHTML = `<div class="throughput-rows">${rows}</div>`;
+
+    if (runnable.length > MAX_THROUGHPUT_BARS) {
+      container.innerHTML += `<p class="chart-caption">Showing the top ${MAX_THROUGHPUT_BARS} of ${runnable.length} runnable models by estimated speed.</p>`;
+    }
+
+    container.querySelectorAll(".throughput-row").forEach((row) => {
+      row.addEventListener("click", () => openDetail(row.dataset.modelId));
+    });
   }
 
   function renderHardware(hardware) {
@@ -218,6 +320,7 @@
               <div class="bucket-card" data-model-id="${encodeURIComponent(item.model.name)}">
                 <div class="bucket-card-name">${item.model.name}</div>
                 <div class="bucket-card-meta">${formatParams(item.model.parameters)} &middot; ${item.model.quantization}</div>
+                <div class="bucket-card-meta">Est. ${formatSpeedRange(item.performance)}</div>
               </div>
             `).join("")}
           </div>
@@ -261,6 +364,7 @@
       case "runtime_verdict": return row.compatibility.runtime_verdict;
       case "overall_verdict": return row.compatibility.overall_verdict;
       case "confidence": return row.compatibility.confidence;
+      case "estimated_speed": return midpointSpeed(row.performance);
       default: return "";
     }
   }
@@ -300,7 +404,7 @@
     const rows = applyFiltersAndSort(state.scan.results);
 
     if (rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="10" class="empty-note">No models match the current filters.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="11" class="empty-note">No models match the current filters.</td></tr>`;
       return;
     }
 
@@ -319,6 +423,7 @@
           <td>${c.runtime_verdict}</td>
           <td>${badge(c.overall_verdict)}</td>
           <td>${c.confidence}</td>
+          <td>${formatSpeedRange(row.performance)}</td>
         </tr>`;
     }).join("");
 
@@ -349,6 +454,7 @@
       const detail = await fetchJSON(`/api/models/${encodedModelId}`);
       const m = detail.model;
       const c = detail.compatibility;
+      const p = detail.performance;
       const mem = detail.memory_breakdown;
 
       let simpleSection = `
@@ -357,6 +463,7 @@
 
         <div class="detail-section">
           ${verdictIcon(c)}
+          <div class="model-meta">Estimated speed: ${formatSpeedRange(p)} (${p.confidence.toLowerCase()} confidence, not benchmarked)</div>
           ${reasonList(c.reasons)}
         </div>`;
 
@@ -425,7 +532,10 @@
 
           <div class="detail-section">
             <h3>Performance</h3>
-            <div class="detail-reason">Not benchmarked. This project does not fabricate performance numbers — a benchmark engine will populate this once it exists.</div>
+            <div class="detail-row"><span class="k">Estimated speed</span><span class="v">${formatSpeedRange(p)}</span></div>
+            <div class="detail-row"><span class="k">Confidence</span><span class="v">${p.confidence}</span></div>
+            <div class="detail-row"><span class="k">Source</span><span class="v">${p.source}</span></div>
+            <div class="detail-reason">${p.explanation.join(" ")}</div>
           </div>
         </details>`;
 
@@ -466,7 +576,9 @@
       state.scan = scan;
 
       renderHero(scan);
+      renderVerdictChart(scan.summary);
       renderBestForYou(scan.best_for_you);
+      renderThroughputChart(scan.results);
       renderHardware(scan.hardware);
       renderBuckets(scan.results);
       populateFilterOptions(scan.results);
@@ -493,6 +605,13 @@
     document.getElementById("toggle-advanced-btn").addEventListener("click", () => {
       state.advancedView = !state.advancedView;
       updateViewToggle();
+    });
+
+    document.getElementById("throughput-advanced-link").addEventListener("click", (e) => {
+      e.preventDefault();
+      state.advancedView = true;
+      updateViewToggle();
+      document.getElementById("models-panel").scrollIntoView({ behavior: "smooth" });
     });
 
     document.getElementById("search-input").addEventListener("input", (e) => {

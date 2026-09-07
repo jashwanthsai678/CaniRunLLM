@@ -22,6 +22,11 @@ from canirunllm.compatibility.requirements import estimate_memory_requirement
 from canirunllm.recommendation.engine import rank_models, RankedModel
 from canirunllm.recommendation.tier import RecommendationTier
 
+from canirunllm.performance.prediction import (
+    predict_performance,
+    PerformancePrediction,
+)
+
 from canirunllm.api.presentation import (
     friendly_verdict,
     build_reasons,
@@ -39,6 +44,8 @@ from canirunllm.api.schemas import (
     ModelResponse,
     ReasonItemResponse,
     CompatibilityResponse,
+    PerformanceRangeResponse,
+    PerformanceResponse,
     ModelResultResponse,
     SummaryResponse,
     ScanResponse,
@@ -116,10 +123,35 @@ def _compatibility_to_response(
     )
 
 
+def _performance_to_response(
+    performance: PerformancePrediction,
+) -> PerformanceResponse:
+
+    speed = performance.generation_speed
+
+    return PerformanceResponse(
+        generation_speed=(
+            PerformanceRangeResponse(
+                low=speed.low,
+                high=speed.high,
+                unit=speed.unit,
+            )
+            if speed is not None
+            else None
+        ),
+        confidence=performance.confidence.value,
+        source=performance.source.value,
+        explanation=performance.explanation,
+    )
+
+
 def _result_to_response(item: ModelCheckResult) -> ModelResultResponse:
     return ModelResultResponse(
         model=_model_to_response(item.model),
         compatibility=_compatibility_to_response(item.model, item.compatibility),
+        performance=_performance_to_response(
+            predict_performance(item.model, item.compatibility)
+        ),
     )
 
 
@@ -127,6 +159,7 @@ def _ranked_to_response(entry: RankedModel) -> ModelResultResponse:
     return ModelResultResponse(
         model=_model_to_response(entry.model),
         compatibility=_compatibility_to_response(entry.model, entry.compatibility),
+        performance=_performance_to_response(entry.performance),
     )
 
 
@@ -268,6 +301,9 @@ def get_model_detail(model_id: str):
     return ModelDetailResponse(
         model=_model_to_response(model),
         compatibility=_compatibility_to_response(model, compatibility),
+        performance=_performance_to_response(
+            predict_performance(model, compatibility)
+        ),
         memory_breakdown=MemoryBreakdownResponse(
             weight_memory_bytes=requirement.weight_memory_bytes,
             kv_cache_bytes=requirement.kv_cache_bytes,

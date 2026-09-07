@@ -7,6 +7,7 @@ from canirunllm.compatibility.confidence import ConfidenceLevel
 
 from canirunllm.recommendation.engine import RankedModel
 from canirunllm.recommendation.tier import RecommendationTier
+from canirunllm.performance.prediction import predict_performance
 
 from canirunllm.api.presentation import (
     friendly_verdict,
@@ -154,6 +155,7 @@ def test_pick_best_for_you_returns_top_favorable_entry():
             compatibility=compatibility,
             tier=RecommendationTier.BEST_MATCH,
             stars=5,
+            performance=predict_performance(model, compatibility),
         )
     ]
 
@@ -174,6 +176,7 @@ def test_pick_best_for_you_returns_none_when_top_is_unfavorable():
             compatibility=compatibility,
             tier=RecommendationTier.CANNOT_RUN,
             stars=1,
+            performance=predict_performance(model, compatibility),
         )
     ]
 
@@ -195,9 +198,11 @@ def test_pick_alternative_skips_the_excluded_model():
 
     ranked = [
         RankedModel(model=failing, compatibility=failing_compat,
-                    tier=RecommendationTier.CANNOT_RUN, stars=1),
+                    tier=RecommendationTier.CANNOT_RUN, stars=1,
+                    performance=predict_performance(failing, failing_compat)),
         RankedModel(model=good, compatibility=good_compat,
-                    tier=RecommendationTier.BEST_MATCH, stars=5),
+                    tier=RecommendationTier.BEST_MATCH, stars=5,
+                    performance=predict_performance(good, good_compat)),
     ]
 
     alternative = pick_alternative(ranked, exclude_model_name="Failing")
@@ -213,7 +218,8 @@ def test_pick_alternative_returns_none_if_nothing_favorable():
 
     ranked = [
         RankedModel(model=only_model, compatibility=compatibility,
-                    tier=RecommendationTier.CANNOT_RUN, stars=1),
+                    tier=RecommendationTier.CANNOT_RUN, stars=1,
+                    performance=predict_performance(only_model, compatibility)),
     ]
 
     assert pick_alternative(ranked, exclude_model_name="OnlyOne") is None

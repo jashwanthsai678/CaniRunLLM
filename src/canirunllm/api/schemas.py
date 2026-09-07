@@ -72,9 +72,26 @@ class CompatibilityResponse(BaseModel):
     reasons: list[ReasonItemResponse]
 
 
+class PerformanceRangeResponse(BaseModel):
+    low: float
+    high: float
+    unit: str
+
+
+class PerformanceResponse(BaseModel):
+    # Compatibility answers "can it run?" — this answers "how fast?", a
+    # separate axis that is never allowed to imply the other. Always a
+    # coarse, low-confidence estimate: never a measurement.
+    generation_speed: PerformanceRangeResponse | None
+    confidence: str
+    source: str
+    explanation: list[str]
+
+
 class ModelResultResponse(BaseModel):
     model: ModelResponse
     compatibility: CompatibilityResponse
+    performance: PerformanceResponse
 
 
 class SummaryResponse(BaseModel):
@@ -111,6 +128,7 @@ class RunCommandResponse(BaseModel):
 class ModelDetailResponse(BaseModel):
     model: ModelResponse
     compatibility: CompatibilityResponse
+    performance: PerformanceResponse
     memory_breakdown: MemoryBreakdownResponse
     run_command: RunCommandResponse | None
     alternative: ModelResponse | None

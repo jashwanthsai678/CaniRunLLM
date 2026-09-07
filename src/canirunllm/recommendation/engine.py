@@ -41,7 +41,10 @@ from canirunllm.recommendation.results import (
     RecommendationEngineResult,
 )
 
-from canirunllm.performance.prediction import predict_performance
+from canirunllm.performance.prediction import (
+    predict_performance,
+    PerformancePrediction,
+)
 
 
 @dataclass
@@ -50,6 +53,7 @@ class RankedModel:
     compatibility: CompatibilityResult
     tier: RecommendationTier
     stars: int
+    performance: PerformancePrediction
 
 
 def _vram_coverage_ratio(
@@ -125,6 +129,7 @@ def rank_models(
                 compatibility=item.compatibility,
                 tier=tier,
                 stars=TIER_STARS[tier],
+                performance=predict_performance(item.model, item.compatibility),
             )
         )
 

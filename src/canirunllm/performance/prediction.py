@@ -105,7 +105,7 @@ def predict_performance(
             f"{model.parameters:,} parameters.",
             f"Adjusted for memory strategy "
             f"'{compatibility.memory_strategy}'.",
-            "Coarse heuristic only — no GPU compute-throughput or "
+            "Coarse heuristic only - no GPU compute-throughput or "
             "memory-bandwidth data is available yet. Confidence will "
             "improve once local benchmark data exists.",
         ],

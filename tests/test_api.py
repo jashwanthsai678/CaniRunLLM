@@ -128,6 +128,53 @@ def test_model_detail_unknown_model_returns_404():
     assert response.status_code == 404
 
 
+def test_models_include_performance_prediction():
+
+    response = client.get("/api/models")
+    data = response.json()
+
+    for entry in data:
+
+        performance = entry["performance"]
+
+        assert performance["confidence"] in ("HIGH", "MEDIUM", "LOW")
+        assert performance["source"] == "MODELLED_ESTIMATE"
+        assert len(performance["explanation"]) > 0
+
+        if entry["compatibility"]["overall_verdict"] == "CANNOT_RUN":
+            assert performance["generation_speed"] is None
+        else:
+            speed = performance["generation_speed"]
+            assert speed is not None
+            assert speed["low"] > 0
+            assert speed["high"] >= speed["low"]
+            assert speed["unit"] == "tok/s"
+
+
+def test_scan_best_for_you_and_recommended_include_performance():
+
+    response = client.get("/api/scan")
+    data = response.json()
+
+    if data["best_for_you"] is not None:
+        assert "performance" in data["best_for_you"]
+
+    for entry in data["recommended"]:
+        assert "performance" in entry
+
+
+def test_model_detail_includes_performance():
+
+    known_models = get_known_models()
+    target = known_models[0]
+
+    response = client.get(f"/api/models/{target.name}")
+    data = response.json()
+
+    assert "performance" in data
+    assert data["performance"]["confidence"] in ("HIGH", "MEDIUM", "LOW")
+
+
 def test_compatibility_includes_friendly_language():
 
     response = client.get("/api/models")

@@ -2,11 +2,25 @@ import sys
 
 from canirunllm.application.scanner_service import ScannerService
 from canirunllm.compatibility.decision import OverallVerdict
+from canirunllm.performance.prediction import predict_performance
 from canirunllm.web.launcher import run_dashboard, DEFAULT_PORT
 
 
 def bytes_to_gb(value):
     return value / (1024 ** 3)
+
+
+def format_performance(performance):
+
+    if performance.generation_speed is None:
+        return "not available (not expected to run on this hardware)"
+
+    speed = performance.generation_speed
+
+    return (
+        f"~{speed.low:.0f}-{speed.high:.0f} {speed.unit} "
+        f"(estimated, {performance.confidence.value} confidence, not benchmarked)"
+    )
 
 
 def main():
@@ -156,13 +170,16 @@ def main():
                 model = item.model
                 result = item.compatibility
 
+                performance = predict_performance(model, result)
+
                 print()
                 print(model.name)
-                print(f"  Memory:     {result.memory_verdict.value}")
-                print(f"  Strategy:   {result.memory_strategy}")
-                print(f"  Runtime:    {result.runtime_verdict.value}")
-                print(f"  Verdict:    {result.overall_verdict.value}")
-                print(f"  Confidence: {result.confidence.value}")
+                print(f"  Memory:      {result.memory_verdict.value}")
+                print(f"  Strategy:    {result.memory_strategy}")
+                print(f"  Runtime:     {result.runtime_verdict.value}")
+                print(f"  Verdict:     {result.overall_verdict.value}")
+                print(f"  Confidence:  {result.confidence.value}")
+                print(f"  Performance: {format_performance(performance)}")
 
         if no_browser:
             return
@@ -229,6 +246,8 @@ def main():
             print(f"Quantization: {variant.quantization}")
             print(f"Runtime:      {variant.runtime or 'unknown'}")
 
+            performance = predict_performance(variant, result)
+
             print()
             print(f"Memory:       {result.memory_verdict.value}")
             print(f"Strategy:     {result.memory_strategy}")
@@ -236,6 +255,7 @@ def main():
             print()
             print(f"Verdict:      {result.overall_verdict.value}")
             print(f"Confidence:   {result.confidence.value}")
+            print(f"Performance:  {format_performance(performance)}")
             print()
             print(f"Reason:       {result.reason}")
 
@@ -253,10 +273,19 @@ def main():
 
             model = item.model
             result = item.compatibility
+            performance = predict_performance(model, result)
+
+            speed = performance.generation_speed
+            speed_text = (
+                f"~{speed.low:.0f}-{speed.high:.0f} tok/s"
+                if speed is not None
+                else "n/a"
+            )
 
             print(
                 f"{model.name:<38}"
                 f"{result.overall_verdict.value:<22}"
+                f"{speed_text:<16}"
                 f"{result.confidence.value}"
             )
 
@@ -273,10 +302,11 @@ def main():
 
             print()
             print(f"{entry.model.name}  [{stars}]")
-            print(f"  Tier:       {entry.tier.value}")
-            print(f"  Verdict:    {entry.compatibility.overall_verdict.value}")
-            print(f"  Strategy:   {entry.compatibility.memory_strategy}")
-            print(f"  Confidence: {entry.compatibility.confidence.value}")
+            print(f"  Tier:        {entry.tier.value}")
+            print(f"  Verdict:     {entry.compatibility.overall_verdict.value}")
+            print(f"  Strategy:    {entry.compatibility.memory_strategy}")
+            print(f"  Confidence:  {entry.compatibility.confidence.value}")
+            print(f"  Performance: {format_performance(entry.performance)}")
 
     elif command == "web":
 

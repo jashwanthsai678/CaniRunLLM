@@ -28,9 +28,24 @@
     </div>
   </section>
 
+  <section class="panel" id="overview-chart-panel">
+    <h2>Compatibility Overview</h2>
+    <div id="verdict-chart"></div>
+  </section>
+
   <section class="panel" id="best-for-you-panel" hidden>
     <h2>Best For You</h2>
     <div id="best-for-you-card"></div>
+  </section>
+
+  <section class="panel" id="throughput-chart-panel" hidden>
+    <h2>Estimated Throughput</h2>
+    <p class="chart-caption">
+      Rough estimates from parameter count and memory strategy only — always
+      low confidence, never measured. See the
+      <a href="#" id="throughput-advanced-link">full table</a> for every model.
+    </p>
+    <div id="throughput-chart"></div>
   </section>
 
   <section class="panel" id="hardware-panel">
@@ -85,10 +100,11 @@
               <th data-sort="runtime_verdict">Runtime Verdict</th>
               <th data-sort="overall_verdict">Verdict</th>
               <th data-sort="confidence">Confidence</th>
+              <th data-sort="estimated_speed">Est. Speed</th>
             </tr>
           </thead>
           <tbody id="model-table-body">
-            <tr><td colspan="10" class="skeleton">Loading models...</td></tr>
+            <tr><td colspan="11" class="skeleton">Loading models...</td></tr>
           </tbody>
         </table>
       </div>
