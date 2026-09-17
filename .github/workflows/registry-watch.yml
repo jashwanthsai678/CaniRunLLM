@@ -52,7 +52,7 @@ jobs:
           git config user.name "registry-watch-bot"
           git config user.email "actions@github.com"
           git checkout -b "$BRANCH"
-          git add scripts/drafts
+          git add -f scripts/drafts
           git commit -m "Draft new model registry candidates"
           git push origin "$BRANCH"
           gh pr create \
