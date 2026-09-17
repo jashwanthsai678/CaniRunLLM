@@ -1,0 +1,30 @@
+[
+  {
+    "name": "granite-4.2-30b-Q4_K_M",
+    "family": "granite-4.2-30b",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "granite",
+    "quantization": "Q4_K_M",
+    "context_length": 131072,
+    "runtime": "llama.cpp",
+    "num_layers": 64,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 17721455328
+  },
+  {
+    "name": "granite-4.2-30b-Q8_0",
+    "family": "granite-4.2-30b",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "granite",
+    "quantization": "Q8_0",
+    "context_length": 131072,
+    "runtime": "llama.cpp",
+    "num_layers": 64,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 31111705312
+  }
+]
