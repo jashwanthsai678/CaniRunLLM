@@ -1,0 +1,62 @@
+name: Registry watch
+
+on:
+  schedule:
+    # Every Monday 09:00 UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      since_days:
+        description: "Look back this many days for new models"
+        default: "14"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  scan-and-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Discover candidate models
+        run: |
+          python scripts/discover_new_models.py \
+            --since-days "${{ github.event.inputs.since_days || '14' }}" \
+            --output candidates.json
+
+      - name: Draft registry entries for each candidate
+        run: python scripts/draft_all_candidates.py candidates.json
+
+      - name: Check whether anything was drafted
+        id: check
+        run: |
+          if [ -d scripts/drafts ] && [ -n "$(ls -A scripts/drafts 2>/dev/null)" ]; then
+            echo "has_drafts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_drafts=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open PR with drafts
+        if: steps.check.outputs.has_drafts == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="registry-watch/$(date +%Y%m%d-%H%M%S)"
+          git config user.name "registry-watch-bot"
+          git config user.email "actions@github.com"
+          git checkout -b "$BRANCH"
+          git add scripts/drafts
+          git commit -m "Draft new model registry candidates"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "New model candidates for registry review" \
+            --base main \
+            --head "$BRANCH" \
+            --body-file scripts/drafts/SUMMARY.md

@@ -8,3 +8,6 @@ dist/
 build/
 dist_exe/
 build_exe/
+
+scripts/drafts/
+candidates.json
