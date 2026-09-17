@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 
@@ -41,10 +42,14 @@ def list_recent_models(org: str, since: datetime, limit: int = 30) -> list[dict]
         print(f"  (failed to list models for {org}: {error})", file=sys.stderr)
         return []
 
+    # Suffixes/substrings that mark a repo as an already-quantized variant
+    # rather than a base/instruct model we'd draft a fresh registry entry for.
+    PREQUANTIZED_MARKERS = ("gguf", "-awq", "-gptq", "-nvfp4", "-fp8", "-fp4", "-exl2", "-mlx", "-int4", "-int8")
+
     recent = []
     for item in results:
         repo_id = item.get("id", "")
-        if "gguf" in repo_id.lower() or "-awq" in repo_id.lower() or "-gptq" in repo_id.lower():
+        if any(marker in repo_id.lower() for marker in PREQUANTIZED_MARKERS):
             continue  # we want base/instruct repos, not pre-quantized ones
         pipeline_tag = item.get("pipeline_tag")
         if pipeline_tag not in (None, "text-generation"):
@@ -64,9 +69,21 @@ def already_known(family: str, existing_families: set[str]) -> bool:
     return any(normalized == existing.lower() for existing in existing_families)
 
 
+def _normalize(text: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
 def guess_gguf_repo(family: str) -> str | None:
+    """Return the first GGUF search hit whose repo name actually relates to
+    `family`, or None if nothing plausible turns up (a human should pick
+    manually rather than being handed an unrelated repo)."""
     candidates = search_gguf_candidates(f"{family} GGUF", limit=5)
-    return candidates[0] if candidates else None
+    normalized_family = _normalize(family)
+    for candidate in candidates:
+        candidate_name = _normalize(candidate.split("/")[-1])
+        if normalized_family in candidate_name or candidate_name in normalized_family:
+            return candidate
+    return None
 
 
 def main() -> None:
