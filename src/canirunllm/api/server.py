@@ -7,6 +7,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from canirunllm.application.scanner_service import ScannerService
+from canirunllm.backends.manager import BackendManager
+from canirunllm.backends.state import runtime_state
 from canirunllm.hardware.scanner import scan_hardware
 from canirunllm.models.hardware import HardwareProfile
 from canirunllm.models.model import ModelSpec
@@ -40,6 +42,7 @@ from canirunllm.api.schemas import (
     MemoryResponse,
     GPUResponse,
     OSResponse,
+    DiskResponse,
     HardwareResponse,
     ModelResponse,
     ReasonItemResponse,
@@ -52,6 +55,9 @@ from canirunllm.api.schemas import (
     MemoryBreakdownResponse,
     RunCommandResponse,
     ModelDetailResponse,
+    ChatRequest,
+    ChatResponse,
+    RuntimeStatusResponse,
 )
 
 
@@ -73,6 +79,7 @@ if STATIC_DIR.is_dir():
 
 
 _service = ScannerService()
+_backend_manager = BackendManager()
 
 
 def _hardware_to_response(hardware: HardwareProfile) -> HardwareResponse:
@@ -81,6 +88,11 @@ def _hardware_to_response(hardware: HardwareProfile) -> HardwareResponse:
         memory=MemoryResponse(**asdict(hardware.memory)),
         os=OSResponse(**asdict(hardware.os)),
         gpus=[GPUResponse(**asdict(gpu)) for gpu in hardware.gpus],
+        disk=(
+            DiskResponse(**asdict(hardware.disk))
+            if hardware.disk is not None
+            else None
+        ),
     )
 
 
@@ -311,6 +323,49 @@ def get_model_detail(model_id: str):
         ),
         run_commands=run_commands_response,
         alternative=alternative_response,
+    )
+
+
+@app.get("/api/runtime/status", response_model=RuntimeStatusResponse)
+def get_runtime_status():
+    running = runtime_state.get()
+
+    if running is None:
+        return RuntimeStatusResponse(
+            running=False,
+            model_name=None,
+            backend_name=None,
+            endpoint_url=None,
+        )
+
+    return RuntimeStatusResponse(
+        running=True,
+        model_name=running.model_name,
+        backend_name=running.backend_name,
+        endpoint_url=running.endpoint_url,
+    )
+
+
+@app.post("/api/chat", response_model=ChatResponse)
+def post_chat(request: ChatRequest):
+    """Placeholder endpoint for the chat UI added in ROADMAP.md Phase 0.
+
+    No backend can actually serve a model yet (Phase 1/2), so this
+    always returns an honest explanation instead of a real model
+    reply - never a fabricated-looking response.
+    """
+
+    if not _backend_manager.available_backends():
+        return ChatResponse(
+            reply=(
+                "No model runtime is available yet - downloading and "
+                "running models locally is planned but not built yet "
+                "(see ROADMAP.md). This is a placeholder response."
+            )
+        )
+
+    return ChatResponse(
+        reply="A backend is available, but chat routing to it isn't implemented yet."
     )
 
 

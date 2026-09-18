@@ -31,11 +31,18 @@ class OSResponse(BaseModel):
     machine: str
 
 
+class DiskResponse(BaseModel):
+    total_bytes: int
+    free_bytes: int
+    used_bytes: int
+
+
 class HardwareResponse(BaseModel):
     cpu: CPUResponse
     memory: MemoryResponse
     os: OSResponse
     gpus: list[GPUResponse]
+    disk: DiskResponse | None
 
 
 class ModelResponse(BaseModel):
@@ -132,3 +139,19 @@ class ModelDetailResponse(BaseModel):
     memory_breakdown: MemoryBreakdownResponse
     run_commands: list[RunCommandResponse]
     alternative: ModelResponse | None
+
+
+class ChatRequest(BaseModel):
+    model_name: str
+    message: str
+
+
+class ChatResponse(BaseModel):
+    reply: str
+
+
+class RuntimeStatusResponse(BaseModel):
+    running: bool
+    model_name: str | None
+    backend_name: str | None
+    endpoint_url: str | None

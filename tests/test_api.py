@@ -271,3 +271,35 @@ def test_static_files_are_served():
     response = client.get("/static/app.js")
 
     assert response.status_code == 200
+
+
+def test_hardware_includes_disk():
+
+    response = client.get("/api/hardware")
+    data = response.json()
+
+    assert data["disk"]["total_bytes"] > 0
+
+
+def test_runtime_status_reports_nothing_running_by_default():
+
+    response = client.get("/api/runtime/status")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "running": False,
+        "model_name": None,
+        "backend_name": None,
+        "endpoint_url": None,
+    }
+
+
+def test_chat_returns_placeholder_when_no_backend_available():
+
+    response = client.post(
+        "/api/chat",
+        json={"model_name": "Qwen3-8B-Q4_K_M", "message": "hello"},
+    )
+
+    assert response.status_code == 200
+    assert "not built yet" in response.json()["reply"]

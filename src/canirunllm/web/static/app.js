@@ -77,6 +77,19 @@
     return res.json();
   }
 
+  async function postJSON(url, payload) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.detail || `Request failed: ${res.status}`);
+    }
+    return res.json();
+  }
+
   function setScanStatus(text) {
     document.getElementById("scan-status").textContent = text;
   }
@@ -493,6 +506,18 @@
           </div>`;
       }
 
+      simpleSection += `
+        <div class="detail-section">
+          <h3>Try It (Preview)</h3>
+          <div class="chat-box">
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input-row">
+              <input id="chat-input" type="text" class="chat-input" placeholder="Ask something...">
+              <button id="chat-send-btn" class="btn btn-primary">Send</button>
+            </div>
+          </div>
+        </div>`;
+
       const technicalSection = `
         <details class="tech-details">
           <summary>Technical details</summary>
@@ -550,8 +575,64 @@
       if (altBox) {
         altBox.addEventListener("click", () => openDetail(altBox.dataset.modelId));
       }
+
+      setupChat(m.name);
     } catch (err) {
       content.innerHTML = `<div class="detail-reason">We couldn't load details for this model.<br>Reason: ${err.message}</div>`;
+    }
+  }
+
+  function appendChatMessage(role, text) {
+    const messages = document.getElementById("chat-messages");
+    if (!messages) return;
+
+    const bubble = document.createElement("div");
+    bubble.className = `chat-message chat-message-${role}`;
+    bubble.textContent = text;
+    messages.appendChild(bubble);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function setupChat(modelName) {
+    const input = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("chat-send-btn");
+    if (!input || !sendBtn) return;
+
+    async function send() {
+      const message = input.value.trim();
+      if (!message) return;
+
+      input.value = "";
+      appendChatMessage("user", message);
+
+      try {
+        const response = await postJSON("/api/chat", {
+          model_name: modelName,
+          message,
+        });
+        appendChatMessage("assistant", response.reply);
+      } catch (err) {
+        appendChatMessage("assistant", `Something went wrong: ${err.message}`);
+      }
+    }
+
+    sendBtn.addEventListener("click", send);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") send();
+    });
+  }
+
+  async function loadRuntimeStatus() {
+    const el = document.getElementById("runtime-status");
+    if (!el) return;
+
+    try {
+      const status = await fetchJSON("/api/runtime/status");
+      el.textContent = status.running
+        ? `● Running: ${status.model_name} (${status.backend_name})`
+        : "No model running";
+    } catch {
+      el.textContent = "No model running";
     }
   }
 
@@ -667,5 +748,6 @@
     setupControls();
     updateViewToggle();
     loadScan();
+    loadRuntimeStatus();
   });
 })();
