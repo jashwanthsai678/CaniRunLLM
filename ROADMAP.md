@@ -98,25 +98,56 @@ immediate value since many target users already have Ollama installed.
 
 ## Phase 2 — Direct llama.cpp backend
 
-Ships second, larger scope than Phase 1.
+Ships second, larger scope than Phase 1. Uses the same "Download & Run"
+UI as Phase 1 - a model with both a verified Ollama tag and a verified
+GGUF repo shows two buttons, one per backend.
 
-- [ ] Decide the binary strategy: require the user to already have
-      `llama-server` on PATH/configured (start here — much less work)
-      vs. bundling prebuilt binaries ourselves (real packaging
-      expansion, per-OS/per-CPU-vs-CUDA).
-- [ ] Build a resumable GGUF downloader using the exact repo + quant
-      filename the registry-watch pipeline already resolves, verified
-      against the registry's `file_size_bytes`.
-- [ ] Wire in the Phase 0 disk-space check as a preflight before any
-      download starts.
-- [ ] Handle gated repos (Llama, Gemma): prompt for and locally store
-      an HF token, clear error message on 401.
-- [ ] Build process supervision: spawn `llama-server`, health-check
-      it, capture logs, clean up on crash/app exit, avoid port
-      collisions.
-- [ ] Point the same chat UI at llama.cpp's OpenAI-compatible
-      endpoint.
-- [ ] Release.
+- [x] Binary strategy: requires `llama-server` already installed - on
+      PATH, or pointed to via the `LLAMA_SERVER_PATH` environment
+      variable. Bundling a binary ourselves is left for later (see
+      "Revisit" note in Phase 3).
+- [x] GGUF downloader (`backends/llama_cpp.py`): the exact HF repo per
+      family is curated in `backends/llama_cpp_sources.py`, extracted
+      directly from `registry/SOURCES.md`'s own citations (all 29
+      families covered, verified with a test that cross-checks every
+      `models.json` family has an entry). The exact filename for a
+      given quantization is resolved dynamically against the repo's
+      real file listing - never guessed. Supports HTTP Range resume
+      if a partial file already exists.
+- [x] Disk-space preflight: checks `hardware/disk.py` before any
+      download starts, raises `InsufficientDiskSpaceError` with the
+      actual shortfall if there isn't room (10% margin beyond the
+      file's own size).
+- [x] Gated repos (Llama, Gemma, etc.): reads an `HF_TOKEN` environment
+      variable if set; a 401 raises `GatedRepositoryError` with a
+      clear message instead of a stack trace. No token-entry UI -
+      standard `HF_TOKEN` env var only, consistent with
+      huggingface_hub's own convention.
+- [x] Process supervision: spawns `llama-server` on a free port,
+      health-checks its `/health` endpoint (with a clear error if the
+      process exits early instead of just timing out silently), logs
+      to `~/.canirunllm/models/llama-server.log`, and registers
+      `atexit` cleanup.
+- [x] Chat wired to llama.cpp's OpenAI-compatible
+      `/v1/chat/completions` endpoint.
+- [x] Verified end-to-end against a real, downloaded llama.cpp release
+      binary (`llama-server` b11035, Windows CPU build) - not mocked:
+      downloaded TinyLlama-1.1B-Chat-v1.0-Q4_K_M's real GGUF straight
+      from Hugging Face (668MB, exact byte match), spawned a real
+      `llama-server` process, passed its health check, and got a real
+      response back through `/v1/chat/completions` (log confirms real
+      prompt/eval token counts, not a code-level echo). **Known,
+      honest limitation found during this test:** `atexit` cleanup
+      only fires on a graceful process exit - a forceful kill
+      (`taskkill /F`, a crash, SIGKILL) orphans the `llama-server`
+      child process, since no application-level code can intercept a
+      forceful OS kill. Confirmed the graceful path works correctly by
+      checking the port was released after a normal Python exit, and
+      confirmed the forceful-kill gap by reproducing it directly. A
+      more complete fix (e.g. a Windows Job Object tying the child's
+      lifetime to the parent's) is future work, not done here.
+- [x] Release (bundled with Phase 1 in the same version, if/when cut -
+      no separate PyPI release needed for this phase alone).
 
 ## Phase 3 — Unify
 

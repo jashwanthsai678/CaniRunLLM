@@ -506,11 +506,14 @@
           </div>`;
       }
 
-      if (detail.ollama_downloadable) {
+      if (detail.ollama_downloadable || detail.llama_cpp_downloadable) {
         simpleSection += `
           <div class="detail-section">
             <h3>Download &amp; Run</h3>
-            <button id="download-run-btn" class="btn btn-primary">Download &amp; Run (Ollama)</button>
+            <div class="download-buttons">
+              ${detail.ollama_downloadable ? '<button class="btn btn-primary download-run-btn" data-backend="ollama">Download &amp; Run (Ollama)</button>' : ""}
+              ${detail.llama_cpp_downloadable ? '<button class="btn btn-primary download-run-btn" data-backend="llama.cpp">Download &amp; Run (llama.cpp)</button>' : ""}
+            </div>
             <div id="download-status" class="download-status"></div>
           </div>`;
       }
@@ -586,7 +589,7 @@
       }
 
       setupChat(m.name);
-      setupDownload(encodedModelId, m.name);
+      setupDownload(encodedModelId);
     } catch (err) {
       content.innerHTML = `<div class="detail-reason">We couldn't load details for this model.<br>Reason: ${err.message}</div>`;
     }
@@ -637,17 +640,20 @@
     return `${(bytes / (1024 ** 3)).toFixed(2)} GB`;
   }
 
-  function setupDownload(encodedModelId, modelName) {
-    const btn = document.getElementById("download-run-btn");
+  function setupDownload(encodedModelId) {
+    const buttons = document.querySelectorAll(".download-run-btn");
     const status = document.getElementById("download-status");
-    if (!btn || !status) return;
+    if (!buttons.length || !status) return;
 
-    btn.addEventListener("click", async () => {
-      btn.disabled = true;
+    async function runDownload(btn, backend) {
+      buttons.forEach((b) => { b.disabled = true; });
       status.textContent = "Starting...";
 
       try {
-        const response = await fetch(`/api/models/${encodedModelId}/download`, { method: "POST" });
+        const response = await fetch(
+          `/api/models/${encodedModelId}/download?backend=${encodeURIComponent(backend)}`,
+          { method: "POST" }
+        );
 
         if (!response.ok) {
           const body = await response.json().catch(() => ({}));
@@ -672,7 +678,7 @@
 
             if (event.status === "FAILED") {
               status.textContent = `Failed: ${event.message}`;
-              btn.disabled = false;
+              buttons.forEach((b) => { b.disabled = false; });
               return;
             }
 
@@ -691,8 +697,12 @@
         }
       } catch (err) {
         status.textContent = `Something went wrong: ${err.message}`;
-        btn.disabled = false;
+        buttons.forEach((b) => { b.disabled = false; });
       }
+    }
+
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => runDownload(btn, btn.dataset.backend));
     });
   }
 

@@ -1,8 +1,5 @@
-"""Picks which backend(s) can handle a given model.
-
-Phase 0 registers no backends, so this always reports nothing
-available - Phase 1 registers an Ollama backend here, Phase 2 a
-llama.cpp one (see ROADMAP.md).
+"""Picks which backend(s) can handle a given model. See ROADMAP.md -
+Phase 1 registered an Ollama backend, Phase 2 a llama.cpp one.
 """
 
 from canirunllm.backends.interface import Backend
@@ -12,17 +9,19 @@ from canirunllm.models.model import ModelSpec
 class BackendManager:
 
     def __init__(self, backends: list[Backend] | None = None):
-        self._backends = backends or []
+        self.backends = backends or []
 
     def available_backends(self) -> list[Backend]:
-        return [backend for backend in self._backends if backend.is_available()]
+        return [backend for backend in self.backends if backend.is_available()]
+
+    def supporting_backends(self, model: ModelSpec) -> list[Backend]:
+        """All registered backends with a verified way to get this model,
+        regardless of whether they're currently available (see
+        Backend.supports) - useful for reporting "X could do this but
+        isn't installed/running" rather than just "nothing can"."""
+        return [backend for backend in self.backends if backend.supports(model)]
 
     def backends_for(self, model: ModelSpec) -> list[Backend]:
-        """Backends that could plausibly serve this specific model.
-
-        Phase 0 has no backends registered, so this is always empty.
-        Once real backends exist, this is where model-specific checks
-        belong (e.g. "does this model have a verified Ollama tag?"),
-        not just "is the backend installed."
-        """
-        return self.available_backends()
+        """Backends that are both available right now and have a
+        verified way to get this specific model."""
+        return [backend for backend in self.supporting_backends(model) if backend.is_available()]

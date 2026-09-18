@@ -14,7 +14,12 @@ import urllib.error
 import urllib.request
 from typing import Iterator
 
-from canirunllm.backends.interface import Backend, DownloadProgress, DownloadStatus
+from canirunllm.backends.interface import (
+    Backend,
+    DownloadProgress,
+    DownloadStatus,
+    ModelNotDownloadableError,
+)
 from canirunllm.backends.ollama_tags import OLLAMA_TAGS
 from canirunllm.models.model import ModelSpec
 
@@ -25,10 +30,6 @@ _REQUEST_TIMEOUT_SECONDS = 5
 
 class OllamaNotAvailableError(Exception):
     pass
-
-
-class ModelNotDownloadableError(Exception):
-    """Raised when a model has no verified Ollama tag - never guess one."""
 
 
 class OllamaBackend(Backend):
@@ -47,6 +48,9 @@ class OllamaBackend(Backend):
 
     def tag_for(self, model: ModelSpec) -> str | None:
         return OLLAMA_TAGS.get(model.name)
+
+    def supports(self, model: ModelSpec) -> bool:
+        return self.tag_for(model) is not None
 
     def download(self, model: ModelSpec) -> Iterator[DownloadProgress]:
         tag = self.tag_for(model)

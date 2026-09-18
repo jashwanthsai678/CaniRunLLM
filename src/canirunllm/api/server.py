@@ -8,9 +8,10 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from canirunllm.application.scanner_service import ScannerService
-from canirunllm.backends.interface import DownloadStatus
+from canirunllm.backends.interface import DownloadStatus, ModelNotDownloadableError
+from canirunllm.backends.llama_cpp import LlamaCppBackend
 from canirunllm.backends.manager import BackendManager
-from canirunllm.backends.ollama import ModelNotDownloadableError, OllamaBackend
+from canirunllm.backends.ollama import OllamaBackend
 from canirunllm.backends.state import RunningModel, runtime_state
 from canirunllm.hardware.scanner import scan_hardware
 from canirunllm.models.hardware import HardwareProfile
@@ -83,7 +84,8 @@ if STATIC_DIR.is_dir():
 
 _service = ScannerService()
 _ollama_backend = OllamaBackend()
-_backend_manager = BackendManager([_ollama_backend])
+_llama_cpp_backend = LlamaCppBackend()
+_backend_manager = BackendManager([_ollama_backend, _llama_cpp_backend])
 
 
 def _hardware_to_response(hardware: HardwareProfile) -> HardwareResponse:
@@ -327,37 +329,49 @@ def get_model_detail(model_id: str):
         ),
         run_commands=run_commands_response,
         alternative=alternative_response,
-        ollama_downloadable=_ollama_backend.tag_for(model) is not None,
+        ollama_downloadable=_ollama_backend.supports(model),
+        llama_cpp_downloadable=_llama_cpp_backend.supports(model),
     )
 
 
 @app.post("/api/models/{model_id}/download")
-def download_and_run_model(model_id: str):
-    """Streams newline-delimited JSON progress events while pulling
-    `model_id` through the Ollama backend, then marks it as the
-    running model. Only models with a verified Ollama tag can be
-    downloaded this way - see backends/ollama_tags.py."""
+def download_and_run_model(model_id: str, backend: str | None = None):
+    """Streams newline-delimited JSON progress events while downloading
+    `model_id` through a backend, then marks it as the running model.
+
+    `backend` selects "ollama" or "llama.cpp" explicitly; if omitted,
+    picks whichever supports this model and is available (Ollama
+    first, since it needs no separate binary install)."""
 
     model = _service.resolver.get_variant(model_id)
 
     if model is None:
         raise HTTPException(status_code=404, detail=f"Model not found: {model_id}")
 
-    if _ollama_backend.tag_for(model) is None:
+    candidates = _backend_manager.supporting_backends(model)
+
+    if not candidates:
         raise HTTPException(
             status_code=400,
-            detail=f"{model_id} has no verified Ollama tag - can't download it this way yet.",
+            detail=f"{model_id} has no verified download source on any backend yet.",
         )
 
-    if not _ollama_backend.is_available():
+    if backend is not None:
+        candidates = [b for b in candidates if b.name == backend]
+        if not candidates:
+            raise HTTPException(status_code=400, detail=f"{model_id} doesn't support backend '{backend}'.")
+
+    chosen = next((b for b in candidates if b.is_available()), None)
+
+    if chosen is None:
         raise HTTPException(
             status_code=503,
-            detail="Ollama isn't running. Install/start it from ollama.com, then try again.",
+            detail=f"{candidates[0].name} isn't available right now (not installed/running?).",
         )
 
     def event_stream():
         try:
-            for progress in _ollama_backend.download(model):
+            for progress in chosen.download(model):
                 yield json.dumps({
                     "status": progress.status.value,
                     "bytes_downloaded": progress.bytes_downloaded,
@@ -365,10 +379,10 @@ def download_and_run_model(model_id: str):
                     "message": progress.message,
                 }) + "\n"
 
-            endpoint_url = _ollama_backend.serve(model)
+            endpoint_url = chosen.serve(model)
             runtime_state.set(RunningModel(
                 model_name=model.name,
-                backend_name=_ollama_backend.name,
+                backend_name=chosen.name,
                 endpoint_url=endpoint_url,
             ))
 

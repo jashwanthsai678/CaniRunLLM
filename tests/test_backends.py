@@ -8,11 +8,15 @@ from canirunllm.backends.state import RunningModel, RuntimeState
 class _FakeBackend(Backend):
     name = "fake"
 
-    def __init__(self, available: bool):
+    def __init__(self, available: bool, supports_all: bool = True):
         self._available = available
+        self._supports_all = supports_all
 
     def is_available(self) -> bool:
         return self._available
+
+    def supports(self, model) -> bool:
+        return self._supports_all
 
     def download(self, model):
         yield DownloadProgress(DownloadStatus.COMPLETE, 0, 0)
@@ -45,6 +49,20 @@ def test_manager_filters_to_available_backends_only():
     manager = BackendManager([available, unavailable])
 
     assert manager.available_backends() == [available]
+
+
+def test_backends_for_requires_both_available_and_supported():
+    available_unsupported = _FakeBackend(available=True, supports_all=False)
+    available_supported = _FakeBackend(available=True, supports_all=True)
+    unavailable_supported = _FakeBackend(available=False, supports_all=True)
+
+    manager = BackendManager([
+        available_unsupported,
+        available_supported,
+        unavailable_supported,
+    ])
+
+    assert manager.backends_for(model=object()) == [available_supported]
 
 
 def test_runtime_state_starts_empty():

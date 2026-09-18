@@ -265,6 +265,16 @@ def test_model_detail_ollama_downloadable_false_without_verified_tag():
     assert response.json()["ollama_downloadable"] is False
 
 
+def test_model_detail_llama_cpp_downloadable_true_for_every_registry_family():
+    """llama_cpp_sources.py has a verified GGUF repo for every family
+    in models.json (checked directly against registry/SOURCES.md's own
+    citations) - unlike Ollama's partial, hand-curated tag coverage."""
+
+    for model in get_known_models():
+        response = client.get(f"/api/models/{model.name}")
+        assert response.json()["llama_cpp_downloadable"] is True, model.name
+
+
 def test_model_detail_alternative_only_present_when_cannot_run():
 
     known_models = get_known_models()
@@ -313,7 +323,7 @@ def test_download_unknown_model_returns_404():
     assert response.status_code == 404
 
 
-def test_download_model_without_ollama_tag_returns_400():
+def test_download_model_without_ollama_tag_falls_back_to_llama_cpp_backend():
 
     known_models = get_known_models()
     model_without_tag = next(
@@ -323,14 +333,30 @@ def test_download_model_without_ollama_tag_returns_400():
 
     response = client.post(f"/api/models/{model_without_tag.name}/download")
 
+    # llama.cpp backend covers every registry family (see
+    # llama_cpp_sources.py), so this now falls through to it instead of
+    # a flat 400 - it's just unavailable in this test environment.
+    assert response.status_code == 503
+
+
+def test_download_with_explicit_backend_that_does_not_support_model_returns_400():
+
+    known_models = get_known_models()
+    model_without_tag = next(
+        m for m in known_models
+        if m.name not in OLLAMA_TAGS
+    )
+
+    response = client.post(f"/api/models/{model_without_tag.name}/download?backend=ollama")
+
     assert response.status_code == 400
-    assert "no verified Ollama tag" in response.json()["detail"]
+    assert "doesn't support backend" in response.json()["detail"]
 
 
 def test_download_when_ollama_not_running_returns_503():
 
     with patch.object(_ollama_backend, "is_available", return_value=False):
-        response = client.post("/api/models/Qwen3-8B-Q4_K_M/download")
+        response = client.post("/api/models/Qwen3-8B-Q4_K_M/download?backend=ollama")
 
     assert response.status_code == 503
 

@@ -658,6 +658,12 @@ tbody td {
   font-size: 12px;
 }
 
+.download-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .download-status {
   margin-top: 8px;
   font-size: 12px;

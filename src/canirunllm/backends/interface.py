@@ -16,6 +16,12 @@ from typing import Iterator
 from canirunllm.models.model import ModelSpec
 
 
+class ModelNotDownloadableError(Exception):
+    """Raised when a backend has no verified way to get a specific model
+    (no curated tag/repo, or no matching file found) - shared across
+    backends so callers only need to catch one exception type."""
+
+
 class DownloadStatus(Enum):
     PENDING = "PENDING"
     DOWNLOADING = "DOWNLOADING"
@@ -41,6 +47,12 @@ class Backend(ABC):
         """Whether this backend can be used at all on this machine right now
         (e.g. is Ollama installed and running? is a llama-server binary
         configured?)."""
+
+    @abstractmethod
+    def supports(self, model: ModelSpec) -> bool:
+        """Whether this backend has a verified way to get `model` at all
+        (e.g. a curated Ollama tag or GGUF repo) - independent of
+        is_available(), which is about the machine, not the model."""
 
     @abstractmethod
     def download(self, model: ModelSpec) -> Iterator[DownloadProgress]:
