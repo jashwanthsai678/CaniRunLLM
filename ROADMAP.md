@@ -151,9 +151,25 @@ GGUF repo shows two buttons, one per backend.
 
 ## Phase 3 — Unify
 
-- [ ] When a model has both an Ollama tag and a resolvable GGUF, let
-      the user choose, defaulting to whichever backend is already
-      installed.
-- [ ] Polish the "running model" indicator / stop button.
+- [x] When a model has both an Ollama tag and a resolvable GGUF, both
+      buttons show, with the actually-installed backend(s) first and
+      clickable, and any not-installed backend shown disabled with an
+      install hint (e.g. "llama.cpp not installed - install it first
+      (github.com/ggml-org/llama.cpp)") instead of failing silently
+      after a click. `ModelDetailResponse` now distinguishes
+      "downloadable" (a verified source exists) from "available" (the
+      backend is actually installed/running right now).
+- [x] "Running model" indicator + Stop button: the topbar now shows a
+      Stop button whenever something's running, wired to
+      `POST /api/runtime/stop`. Fixed a related bug while wiring this
+      up: `stop_runtime` only called `backend.stop()` if that backend
+      currently reported itself `is_available()` - meaning a backend
+      that went down mid-session (e.g. Ollama's service died) would
+      never get a stop attempt at all. Now looks up the backend by
+      name among all registered backends, not just the available ones.
+      Verified in a live browser run: Download & Run -> Stop -> status
+      correctly resets to "No model running".
 - [ ] Revisit bundling llama.cpp binaries if the "install it yourself"
-      friction from Phase 2 turns out to matter in practice.
+      friction from Phase 2 turns out to matter in practice. Left
+      exactly as scoped - a real per-OS/per-CPU-vs-CUDA packaging
+      decision, not something to default into.

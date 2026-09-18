@@ -506,13 +506,24 @@
           </div>`;
       }
 
-      if (detail.ollama_downloadable || detail.llama_cpp_downloadable) {
+      const downloadOptions = [
+        { key: "ollama", label: "Ollama", downloadable: detail.ollama_downloadable, available: detail.ollama_available, installHint: "ollama.com" },
+        { key: "llama.cpp", label: "llama.cpp", downloadable: detail.llama_cpp_downloadable, available: detail.llama_cpp_available, installHint: "github.com/ggml-org/llama.cpp" },
+      ]
+        .filter((opt) => opt.downloadable)
+        // Available backends first, so the one that'll actually work
+        // is the obvious default instead of a coin flip.
+        .sort((a, b) => (b.available - a.available));
+
+      if (downloadOptions.length > 0) {
         simpleSection += `
           <div class="detail-section">
             <h3>Download &amp; Run</h3>
             <div class="download-buttons">
-              ${detail.ollama_downloadable ? '<button class="btn btn-primary download-run-btn" data-backend="ollama">Download &amp; Run (Ollama)</button>' : ""}
-              ${detail.llama_cpp_downloadable ? '<button class="btn btn-primary download-run-btn" data-backend="llama.cpp">Download &amp; Run (llama.cpp)</button>' : ""}
+              ${downloadOptions.map((opt) => opt.available
+                ? `<button class="btn btn-primary download-run-btn" data-backend="${opt.key}">Download &amp; Run (${opt.label})</button>`
+                : `<button class="btn btn-secondary" disabled title="Install ${opt.label} first (${opt.installHint})">${opt.label} not installed</button>`
+              ).join("")}
             </div>
             <div id="download-status" class="download-status"></div>
           </div>`;
@@ -708,6 +719,7 @@
 
   async function loadRuntimeStatus() {
     const el = document.getElementById("runtime-status");
+    const stopBtn = document.getElementById("stop-runtime-btn");
     if (!el) return;
 
     try {
@@ -715,9 +727,28 @@
       el.textContent = status.running
         ? `● Running: ${status.model_name} (${status.backend_name})`
         : "No model running";
+      if (stopBtn) stopBtn.hidden = !status.running;
     } catch {
       el.textContent = "No model running";
+      if (stopBtn) stopBtn.hidden = true;
     }
+  }
+
+  function setupStopButton() {
+    const stopBtn = document.getElementById("stop-runtime-btn");
+    if (!stopBtn) return;
+
+    stopBtn.addEventListener("click", async () => {
+      stopBtn.disabled = true;
+      try {
+        await postJSON("/api/runtime/stop", {});
+      } catch {
+        // best-effort - loadRuntimeStatus() below reflects whatever the
+        // server actually thinks is running regardless of this outcome
+      }
+      stopBtn.disabled = false;
+      loadRuntimeStatus();
+    });
   }
 
   function formatScanTime(iso) {
@@ -764,6 +795,7 @@
 
   function setupControls() {
     document.getElementById("rescan-btn").addEventListener("click", loadScan);
+    setupStopButton();
 
     document.getElementById("hero-see-models-btn").addEventListener("click", () => {
       const target = document.getElementById("best-for-you-panel").hidden

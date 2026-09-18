@@ -331,6 +331,8 @@ def get_model_detail(model_id: str):
         alternative=alternative_response,
         ollama_downloadable=_ollama_backend.supports(model),
         llama_cpp_downloadable=_llama_cpp_backend.supports(model),
+        ollama_available=_ollama_backend.is_available(),
+        llama_cpp_available=_llama_cpp_backend.is_available(),
     )
 
 
@@ -410,7 +412,7 @@ def stop_runtime():
     if running is None:
         return {"stopped": False}
 
-    for backend in _backend_manager.available_backends():
+    for backend in _backend_manager.backends:
         if backend.name == running.backend_name:
             backend.stop()
             break

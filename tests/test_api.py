@@ -374,6 +374,44 @@ def test_runtime_status_reports_nothing_running_by_default():
     }
 
 
+def test_stop_when_nothing_running_reports_false():
+
+    response = client.post("/api/runtime/stop")
+
+    assert response.status_code == 200
+    assert response.json() == {"stopped": False}
+
+
+def test_stop_when_something_running_calls_backend_stop_and_clears_state():
+
+    from canirunllm.backends.state import RunningModel
+
+    runtime_state.set(RunningModel(
+        model_name="Qwen3-8B-Q4_K_M",
+        backend_name="ollama",
+        endpoint_url="http://127.0.0.1:11434",
+    ))
+
+    with patch.object(_ollama_backend, "stop") as mock_stop:
+        response = client.post("/api/runtime/stop")
+
+    assert response.status_code == 200
+    assert response.json() == {"stopped": True}
+    mock_stop.assert_called_once()
+    assert runtime_state.get() is None
+
+
+def test_model_detail_includes_backend_availability_flags():
+
+    response = client.get("/api/models/Qwen3-8B-Q4_K_M")
+    data = response.json()
+
+    assert "ollama_available" in data
+    assert "llama_cpp_available" in data
+    assert isinstance(data["ollama_available"], bool)
+    assert isinstance(data["llama_cpp_available"], bool)
+
+
 def test_chat_says_no_runtime_when_no_backend_available():
 
     with patch.object(_ollama_backend, "is_available", return_value=False):

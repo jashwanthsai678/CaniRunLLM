@@ -141,6 +141,11 @@ class ModelDetailResponse(BaseModel):
     alternative: ModelResponse | None
     ollama_downloadable: bool
     llama_cpp_downloadable: bool
+    # Distinct from the two flags above: "downloadable" means we have a
+    # verified way to get this model at all; "available" means that
+    # backend is actually installed/running on this machine right now.
+    ollama_available: bool
+    llama_cpp_available: bool
 
 
 class ChatRequest(BaseModel):
