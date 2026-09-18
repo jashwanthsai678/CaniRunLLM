@@ -260,6 +260,38 @@ main {
   margin-top: 14px;
 }
 
+.hardware-photo {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  line-height: 0;
+}
+
+.hardware-img {
+  display: block;
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  object-position: center 45%;
+  filter: saturate(0.85) brightness(0.9);
+}
+
+.hardware-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13, 17, 23, 0.15) 0%, var(--bg) 100%);
+}
+
+.hardware-caption {
+  text-align: center;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  margin: 14px 0 0 0;
+}
+
 .section {
   padding: 56px 0;
   border-top: 1px solid var(--border);
@@ -461,4 +493,5 @@ main {
 @media (max-width: 600px) {
   .hero h1 { font-size: 30px; }
   .hero { padding-top: 64px; }
+  .hardware-img { height: 220px; }
 }
