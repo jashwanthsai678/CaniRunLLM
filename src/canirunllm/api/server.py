@@ -405,6 +405,28 @@ def download_and_run_model(model_id: str, backend: str | None = None):
     return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
 
+def _get_verified_running_state():
+    """runtime_state reflects the last successful download/serve call,
+    but nothing re-checks it afterwards - if the backend dies outside
+    of our own stop() flow (Ollama's service crashes, gets closed,
+    etc.), it would otherwise keep reporting "running" forever. This
+    re-validates against the backend's own is_available() and clears
+    the stale state if it no longer holds."""
+
+    running = runtime_state.get()
+
+    if running is None:
+        return None
+
+    backend = next((b for b in _backend_manager.backends if b.name == running.backend_name), None)
+
+    if backend is None or not backend.is_available():
+        runtime_state.clear()
+        return None
+
+    return running
+
+
 @app.post("/api/runtime/stop")
 def stop_runtime():
     running = runtime_state.get()
@@ -423,7 +445,7 @@ def stop_runtime():
 
 @app.get("/api/runtime/status", response_model=RuntimeStatusResponse)
 def get_runtime_status():
-    running = runtime_state.get()
+    running = _get_verified_running_state()
 
     if running is None:
         return RuntimeStatusResponse(
@@ -447,7 +469,7 @@ def post_chat(request: ChatRequest):
     only). If nothing matching is running, returns an honest
     explanation instead of a fabricated-looking reply."""
 
-    running = runtime_state.get()
+    running = _get_verified_running_state()
 
     if running is not None and running.model_name == request.model_name:
 

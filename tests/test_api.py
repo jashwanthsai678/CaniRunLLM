@@ -361,6 +361,47 @@ def test_download_when_ollama_not_running_returns_503():
     assert response.status_code == 503
 
 
+def test_runtime_status_self_heals_when_backend_is_no_longer_available():
+    """If the backend serving a model dies outside of our own stop()
+    flow (Ollama's service crashes, gets closed, etc.), the status
+    endpoint must notice and clear the stale state - not keep claiming
+    the model is running forever."""
+
+    from canirunllm.backends.state import RunningModel
+
+    runtime_state.set(RunningModel(
+        model_name="Qwen3-8B-Q4_K_M",
+        backend_name="ollama",
+        endpoint_url="http://127.0.0.1:11434",
+    ))
+
+    with patch.object(_ollama_backend, "is_available", return_value=False):
+        response = client.get("/api/runtime/status")
+
+    assert response.json()["running"] is False
+    assert runtime_state.get() is None
+
+
+def test_chat_self_heals_stale_state_instead_of_claiming_it_is_running():
+
+    from canirunllm.backends.state import RunningModel
+
+    runtime_state.set(RunningModel(
+        model_name="Qwen3-8B-Q4_K_M",
+        backend_name="ollama",
+        endpoint_url="http://127.0.0.1:11434",
+    ))
+
+    with patch.object(_ollama_backend, "is_available", return_value=False):
+        response = client.post(
+            "/api/chat",
+            json={"model_name": "Qwen3-8B-Q4_K_M", "message": "hello"},
+        )
+
+    assert "No model runtime is available" in response.json()["reply"]
+    assert runtime_state.get() is None
+
+
 def test_runtime_status_reports_nothing_running_by_default():
 
     response = client.get("/api/runtime/status")
@@ -446,7 +487,8 @@ def test_chat_routes_to_backend_when_matching_model_is_running():
         endpoint_url="http://127.0.0.1:11434",
     ))
 
-    with patch.object(_ollama_backend, "chat", return_value="a real reply") as mock_chat:
+    with patch.object(_ollama_backend, "is_available", return_value=True), \
+         patch.object(_ollama_backend, "chat", return_value="a real reply") as mock_chat:
         response = client.post(
             "/api/chat",
             json={"model_name": "Qwen3-8B-Q4_K_M", "message": "hello"},

@@ -10,6 +10,7 @@ guessing a tag that might not exist.
 """
 
 import json
+import time
 import urllib.error
 import urllib.request
 from typing import Iterator
@@ -27,6 +28,16 @@ OLLAMA_BASE_URL = "http://127.0.0.1:11434"
 _AVAILABILITY_TIMEOUT_SECONDS = 1.5
 _REQUEST_TIMEOUT_SECONDS = 5
 
+# get_model_detail() checks is_available() on every single model click.
+# On at least some machines, connecting to a closed local port doesn't
+# fail instantly - it waits out the full connection timeout instead of
+# an immediate refusal (observed directly: a 62-model test loop with
+# Ollama stopped went from ~10s to ~3.5 minutes without this cache).
+# Short-lived caching keeps the UI responsive without spamming
+# connection attempts, while still noticing within a few seconds if
+# Ollama starts or stops.
+_AVAILABILITY_CACHE_SECONDS = 3
+
 
 class OllamaNotAvailableError(Exception):
     pass
@@ -37,14 +48,25 @@ class OllamaBackend(Backend):
 
     def __init__(self, base_url: str = OLLAMA_BASE_URL):
         self._base_url = base_url
+        self._availability_cache: tuple[float, bool] | None = None
 
     def is_available(self) -> bool:
+        now = time.monotonic()
+
+        if self._availability_cache is not None:
+            checked_at, cached_result = self._availability_cache
+            if now - checked_at < _AVAILABILITY_CACHE_SECONDS:
+                return cached_result
+
         try:
             request = urllib.request.Request(f"{self._base_url}/api/version")
             with urllib.request.urlopen(request, timeout=_AVAILABILITY_TIMEOUT_SECONDS):
-                return True
+                result = True
         except (urllib.error.URLError, OSError):
-            return False
+            result = False
+
+        self._availability_cache = (now, result)
+        return result
 
     def tag_for(self, model: ModelSpec) -> str | None:
         return OLLAMA_TAGS.get(model.name)

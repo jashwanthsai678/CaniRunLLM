@@ -1,4 +1,5 @@
 import json
+import time
 import urllib.error
 from unittest.mock import MagicMock, patch
 
@@ -35,6 +36,34 @@ def test_is_available_false_on_connection_error():
     backend = OllamaBackend()
     with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("refused")):
         assert backend.is_available() is False
+
+
+def test_is_available_caches_result_briefly():
+    """Real-world finding: on at least some machines, connecting to a
+    closed local port doesn't fail instantly - it waits out the full
+    timeout. get_model_detail() calls is_available() on every model
+    click, so repeated checks must not each pay that cost."""
+
+    backend = OllamaBackend()
+
+    with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("refused")) as mock_urlopen:
+        assert backend.is_available() is False
+        assert backend.is_available() is False
+        assert backend.is_available() is False
+
+    assert mock_urlopen.call_count == 1
+
+
+def test_is_available_rechecks_after_cache_expires():
+    backend = OllamaBackend()
+
+    with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("refused")):
+        assert backend.is_available() is False
+
+    with patch("time.monotonic", return_value=time.monotonic() + 100):
+        with patch("urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.return_value.__enter__.return_value = MagicMock()
+            assert backend.is_available() is True
 
 
 def test_download_raises_without_verified_tag():
