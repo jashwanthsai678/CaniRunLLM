@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/canirunllm)](https://pypi.org/project/canirunllm/)
 [![Python](https://img.shields.io/pypi/pyversions/canirunllm)](https://pypi.org/project/canirunllm/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-124%20passing-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-177%20passing-brightgreen)](tests)
 
 Find out which open-source LLMs your machine can actually run — and which
 one you should pick — with an automatic hardware scan and a local dashboard.
@@ -41,8 +41,10 @@ The browser dashboard shows a friendly "what can I run / what should I run"
 report — including estimated throughput and comparison charts — with the
 full technical breakdown (VRAM, RAM, KV cache, quantization, runtime,
 confidence) available behind a "Technical details" toggle for anyone who
-wants it. Clicking a runnable model shows real, verified commands for
-running it locally (llama.cpp, Ollama).
+wants it. Clicking a model shows real, verified commands for running it
+yourself (llama.cpp, Ollama) — and for a growing set of models, a
+**Download & Run** button that does it for you, right there in the
+dashboard, with a live chat box to try it once it's up.
 
 ## Table of contents
 
@@ -50,6 +52,7 @@ running it locally (llama.cpp, Ollama).
 - [Install](#install)
 - [Quick start](#quick-start)
 - [What it actually checks](#what-it-actually-checks)
+- [Download & run models directly](#download--run-models-directly)
 - [Architecture](#architecture)
 - [Current limitations](#current-limitations-being-upfront-about-them)
 - [Contributing](#contributing)
@@ -158,6 +161,36 @@ For every model + quantization pair, CanIRunLLM estimates:
 The result is always a verdict *plus* a confidence level and a plain-English
 reason — never a bare "cannot run" with no explanation.
 
+## Download & run models directly
+
+Beyond telling you what to run, CanIRunLLM can download a model and run it
+for you, then let you try it right there in the dashboard's chat box.
+
+Click **Download & Run** on a model and pick a backend — whichever one you
+actually have installed shows first and clickable; anything missing shows
+disabled with a link to get it, instead of failing after the fact:
+
+- **Ollama** — if [Ollama](https://ollama.com) is installed and running,
+  this pulls the model through Ollama itself and serves it from there.
+  Only offered for models with a tag someone has actually checked against
+  Ollama's library (see
+  [`backends/ollama_tags.py`](src/canirunllm/backends/ollama_tags.py)) —
+  a partial, honest list beats a guessed tag that turns out not to exist.
+- **llama.cpp** — downloads the model's GGUF file straight from Hugging
+  Face and serves it with your own `llama-server` (install
+  [llama.cpp](https://github.com/ggml-org/llama.cpp) and put it on `PATH`,
+  or point the `LLAMA_SERVER_PATH` environment variable at the binary).
+  Covers every model in the registry, since the exact source repo for each
+  one is already documented in `SOURCES.md`.
+
+A couple of things worth knowing going in: gated Hugging Face repos (Llama,
+Gemma) need your own token in the `HF_TOKEN` environment variable — there's
+no way around that automatically, and this tool won't pretend otherwise.
+And if the app is forcefully killed rather than closed normally, a spawned
+`llama-server` process can be left running in the background; see
+[`ROADMAP.md`](ROADMAP.md) for that and everything else that's built,
+tested, and explicitly left as a known gap rather than glossed over.
+
 ## Architecture
 
 ```
@@ -194,6 +227,12 @@ whole project.
 - Performance numbers are a coarse, clearly-labeled *estimate* based on
   parameter count and memory strategy — there is no real benchmarking yet,
   and the tool never presents an estimate as a measurement.
+- **Download & Run** has been built and tested end-to-end on Windows
+  against real Ollama and llama.cpp installs, but not yet run on macOS or
+  Linux — the underlying code is plain, portable Python, but that's a
+  code-review judgment, not a demonstrated one yet. See
+  [`ROADMAP.md`](ROADMAP.md) for the full, current list of what's verified
+  versus what's still open.
 
 ## Contributing
 
