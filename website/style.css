@@ -23,6 +23,7 @@ html, body {
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.5;
+  overflow-x: hidden;
 }
 
 a { color: var(--accent); }
@@ -542,4 +543,18 @@ main {
   .hero h1 { font-size: 30px; }
   .hero { padding-top: 64px; }
   .hardware-img { height: 220px; }
+
+  .topbar-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .topnav {
+    gap: 14px;
+    font-size: 13px;
+    justify-content: center;
+    width: 100%;
+  }
 }
