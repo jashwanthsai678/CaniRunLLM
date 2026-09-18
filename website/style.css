@@ -312,6 +312,8 @@ main {
   filter: saturate(0.85) brightness(0.9);
 }
 
+.network-photo { object-position: center 20%; }
+
 .hardware-photo::after {
   content: "";
   position: absolute;
