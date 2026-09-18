@@ -64,18 +64,37 @@ screenshot, zero console errors).
 Ships first: far less work than Phase 2, and covers most of the
 immediate value since many target users already have Ollama installed.
 
-- [ ] Detect whether Ollama is installed/running (`is_available()`).
-- [ ] Wire `download()` to `ollama pull <tag>`, streaming its progress
-      into the dashboard.
-- [ ] Wire `serve()` to Ollama's existing REST API — no process
-      spawning needed, it's already serving once pulled.
-- [ ] Point the Phase 0 chat UI at Ollama's `/api/chat` endpoint.
-- [ ] Expand `_OLLAMA_TAGS` coverage in `presentation.py` beyond
+- [x] Detect whether Ollama is installed/running
+      (`OllamaBackend.is_available()`, `backends/ollama.py`).
+- [x] Wire `download()` to `ollama pull <tag>` (Ollama's `/api/pull`,
+      streamed), surfaced through `POST /api/models/{id}/download` as
+      newline-delimited JSON progress events, and a "Download & Run"
+      button + live progress in the dashboard.
+- [x] Wire `serve()` to Ollama's existing REST API — no process
+      spawning needed, it's already serving once pulled. Tracked via
+      `backends/state.py` + `GET /api/runtime/status`, shown as
+      "● Running: `<model>` (ollama)" in the topbar.
+- [x] Point the Phase 0 chat UI at Ollama's `/api/chat` endpoint - only
+      when the requested model matches what's actually running;
+      otherwise an honest "isn't running yet" message, never a
+      fabricated reply.
+- [ ] Expand `OLLAMA_TAGS` coverage (`backends/ollama_tags.py`) beyond
       today's hand-curated subset — same manual-verification
-      discipline as `registry/SOURCES.md`. Models with no verified tag
-      say "not available via Ollama," never guess one.
-- [ ] Release. Test on a machine with Ollama and one without (should
-      fall back to install instructions, not break).
+      discipline as `registry/SOURCES.md`. Deliberately **not** done
+      as part of this pass: verifying each tag against
+      https://ollama.com/library requires checking one model at a
+      time, same as the registry itself, and guessing a plausible-
+      looking tag would be worse than not offering one. Left for a
+      dedicated follow-up.
+- [x] Tested against a real, running Ollama instance end-to-end (not
+      mocked): downloaded `TinyLlama-1.1B-Chat-v1.0-Q4_K_M` for real
+      (668MB, live progress observed going 0 -> 100%), got a real
+      chat reply back through `/api/chat`, and verified the full flow
+      in a real browser (screenshot, zero console errors). Behavior
+      when Ollama isn't running/installed is covered by tests
+      (`test_api.py`, `test_ollama_backend.py`) using a mocked
+      `is_available()`, since CI can't assume Ollama is present.
+- [ ] Release (cut a new pip/exe version including this).
 
 ## Phase 2 — Direct llama.cpp backend
 

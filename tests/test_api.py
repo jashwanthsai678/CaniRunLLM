@@ -1,10 +1,24 @@
+from unittest.mock import patch
+
+import pytest
 from fastapi.testclient import TestClient
 
-from canirunllm.api.server import app
+from canirunllm.api.server import app, _ollama_backend
+from canirunllm.backends.ollama_tags import OLLAMA_TAGS
+from canirunllm.backends.state import runtime_state
 from canirunllm.registry.models import get_known_models
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def _reset_runtime_state():
+    """runtime_state is a module-level singleton - never let one test's
+    "running model" leak into the next."""
+    runtime_state.clear()
+    yield
+    runtime_state.clear()
 
 
 def test_health():
@@ -238,6 +252,17 @@ def test_model_detail_ollama_uses_verified_tag_for_known_model():
     ollama_entry = next(c for c in data["run_commands"] if c["runtime"] == "Ollama")
 
     assert ollama_entry["command"] == "ollama run qwen3:8b-q4_K_M"
+    assert data["ollama_downloadable"] is True
+
+
+def test_model_detail_ollama_downloadable_false_without_verified_tag():
+
+    known_models = get_known_models()
+    model_without_tag = next(m for m in known_models if m.name not in OLLAMA_TAGS)
+
+    response = client.get(f"/api/models/{model_without_tag.name}")
+
+    assert response.json()["ollama_downloadable"] is False
 
 
 def test_model_detail_alternative_only_present_when_cannot_run():
@@ -281,6 +306,35 @@ def test_hardware_includes_disk():
     assert data["disk"]["total_bytes"] > 0
 
 
+def test_download_unknown_model_returns_404():
+
+    response = client.post("/api/models/does-not-exist/download")
+
+    assert response.status_code == 404
+
+
+def test_download_model_without_ollama_tag_returns_400():
+
+    known_models = get_known_models()
+    model_without_tag = next(
+        m for m in known_models
+        if m.name not in OLLAMA_TAGS
+    )
+
+    response = client.post(f"/api/models/{model_without_tag.name}/download")
+
+    assert response.status_code == 400
+    assert "no verified Ollama tag" in response.json()["detail"]
+
+
+def test_download_when_ollama_not_running_returns_503():
+
+    with patch.object(_ollama_backend, "is_available", return_value=False):
+        response = client.post("/api/models/Qwen3-8B-Q4_K_M/download")
+
+    assert response.status_code == 503
+
+
 def test_runtime_status_reports_nothing_running_by_default():
 
     response = client.get("/api/runtime/status")
@@ -294,12 +348,46 @@ def test_runtime_status_reports_nothing_running_by_default():
     }
 
 
-def test_chat_returns_placeholder_when_no_backend_available():
+def test_chat_says_no_runtime_when_no_backend_available():
 
-    response = client.post(
-        "/api/chat",
-        json={"model_name": "Qwen3-8B-Q4_K_M", "message": "hello"},
-    )
+    with patch.object(_ollama_backend, "is_available", return_value=False):
+        response = client.post(
+            "/api/chat",
+            json={"model_name": "Qwen3-8B-Q4_K_M", "message": "hello"},
+        )
 
     assert response.status_code == 200
-    assert "not built yet" in response.json()["reply"]
+    assert "No model runtime is available" in response.json()["reply"]
+
+
+def test_chat_says_model_not_running_when_backend_available_but_nothing_running():
+
+    with patch.object(_ollama_backend, "is_available", return_value=True):
+        response = client.post(
+            "/api/chat",
+            json={"model_name": "Qwen3-8B-Q4_K_M", "message": "hello"},
+        )
+
+    assert response.status_code == 200
+    assert "isn't running yet" in response.json()["reply"]
+
+
+def test_chat_routes_to_backend_when_matching_model_is_running():
+
+    from canirunllm.backends.state import RunningModel
+
+    runtime_state.set(RunningModel(
+        model_name="Qwen3-8B-Q4_K_M",
+        backend_name="ollama",
+        endpoint_url="http://127.0.0.1:11434",
+    ))
+
+    with patch.object(_ollama_backend, "chat", return_value="a real reply") as mock_chat:
+        response = client.post(
+            "/api/chat",
+            json={"model_name": "Qwen3-8B-Q4_K_M", "message": "hello"},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["reply"] == "a real reply"
+    mock_chat.assert_called_once()

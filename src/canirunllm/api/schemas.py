@@ -139,6 +139,7 @@ class ModelDetailResponse(BaseModel):
     memory_breakdown: MemoryBreakdownResponse
     run_commands: list[RunCommandResponse]
     alternative: ModelResponse | None
+    ollama_downloadable: bool
 
 
 class ChatRequest(BaseModel):

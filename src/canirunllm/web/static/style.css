@@ -658,6 +658,12 @@ tbody td {
   font-size: 12px;
 }
 
+.download-status {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
 .alternative-box {
   background: rgba(63, 185, 80, 0.08);
   border: 1px solid rgba(63, 185, 80, 0.3);

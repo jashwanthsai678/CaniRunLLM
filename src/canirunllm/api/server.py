@@ -1,14 +1,17 @@
+import json
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from canirunllm.application.scanner_service import ScannerService
+from canirunllm.backends.interface import DownloadStatus
 from canirunllm.backends.manager import BackendManager
-from canirunllm.backends.state import runtime_state
+from canirunllm.backends.ollama import ModelNotDownloadableError, OllamaBackend
+from canirunllm.backends.state import RunningModel, runtime_state
 from canirunllm.hardware.scanner import scan_hardware
 from canirunllm.models.hardware import HardwareProfile
 from canirunllm.models.model import ModelSpec
@@ -79,7 +82,8 @@ if STATIC_DIR.is_dir():
 
 
 _service = ScannerService()
-_backend_manager = BackendManager()
+_ollama_backend = OllamaBackend()
+_backend_manager = BackendManager([_ollama_backend])
 
 
 def _hardware_to_response(hardware: HardwareProfile) -> HardwareResponse:
@@ -323,7 +327,82 @@ def get_model_detail(model_id: str):
         ),
         run_commands=run_commands_response,
         alternative=alternative_response,
+        ollama_downloadable=_ollama_backend.tag_for(model) is not None,
     )
+
+
+@app.post("/api/models/{model_id}/download")
+def download_and_run_model(model_id: str):
+    """Streams newline-delimited JSON progress events while pulling
+    `model_id` through the Ollama backend, then marks it as the
+    running model. Only models with a verified Ollama tag can be
+    downloaded this way - see backends/ollama_tags.py."""
+
+    model = _service.resolver.get_variant(model_id)
+
+    if model is None:
+        raise HTTPException(status_code=404, detail=f"Model not found: {model_id}")
+
+    if _ollama_backend.tag_for(model) is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{model_id} has no verified Ollama tag - can't download it this way yet.",
+        )
+
+    if not _ollama_backend.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Ollama isn't running. Install/start it from ollama.com, then try again.",
+        )
+
+    def event_stream():
+        try:
+            for progress in _ollama_backend.download(model):
+                yield json.dumps({
+                    "status": progress.status.value,
+                    "bytes_downloaded": progress.bytes_downloaded,
+                    "total_bytes": progress.total_bytes,
+                    "message": progress.message,
+                }) + "\n"
+
+            endpoint_url = _ollama_backend.serve(model)
+            runtime_state.set(RunningModel(
+                model_name=model.name,
+                backend_name=_ollama_backend.name,
+                endpoint_url=endpoint_url,
+            ))
+
+            yield json.dumps({
+                "status": "RUNNING",
+                "bytes_downloaded": 0,
+                "total_bytes": None,
+                "message": f"{model.name} is ready.",
+            }) + "\n"
+        except Exception as exc:
+            yield json.dumps({
+                "status": DownloadStatus.FAILED.value,
+                "bytes_downloaded": 0,
+                "total_bytes": None,
+                "message": str(exc),
+            }) + "\n"
+
+    return StreamingResponse(event_stream(), media_type="application/x-ndjson")
+
+
+@app.post("/api/runtime/stop")
+def stop_runtime():
+    running = runtime_state.get()
+
+    if running is None:
+        return {"stopped": False}
+
+    for backend in _backend_manager.available_backends():
+        if backend.name == running.backend_name:
+            backend.stop()
+            break
+
+    runtime_state.clear()
+    return {"stopped": True}
 
 
 @app.get("/api/runtime/status", response_model=RuntimeStatusResponse)
@@ -348,24 +427,41 @@ def get_runtime_status():
 
 @app.post("/api/chat", response_model=ChatResponse)
 def post_chat(request: ChatRequest):
-    """Placeholder endpoint for the chat UI added in ROADMAP.md Phase 0.
+    """Routes to whichever model is actually running (Phase 1: Ollama
+    only). If nothing matching is running, returns an honest
+    explanation instead of a fabricated-looking reply."""
 
-    No backend can actually serve a model yet (Phase 1/2), so this
-    always returns an honest explanation instead of a real model
-    reply - never a fabricated-looking response.
-    """
+    running = runtime_state.get()
+
+    if running is not None and running.model_name == request.model_name:
+
+        backend = next(
+            (b for b in _backend_manager.available_backends() if b.name == running.backend_name),
+            None,
+        )
+        model = _service.resolver.get_variant(request.model_name)
+
+        if backend is not None and model is not None:
+            try:
+                return ChatResponse(reply=backend.chat(model, request.message))
+            except Exception as exc:
+                return ChatResponse(
+                    reply=f"{model.name} is running, but didn't respond: {exc}"
+                )
 
     if not _backend_manager.available_backends():
         return ChatResponse(
             reply=(
-                "No model runtime is available yet - downloading and "
-                "running models locally is planned but not built yet "
-                "(see ROADMAP.md). This is a placeholder response."
+                "No model runtime is available right now (e.g. Ollama "
+                "isn't installed/running). This is a placeholder response."
             )
         )
 
     return ChatResponse(
-        reply="A backend is available, but chat routing to it isn't implemented yet."
+        reply=(
+            f"'{request.model_name}' isn't running yet - use "
+            "\"Download & Run\" on this model first."
+        )
     )
 
 

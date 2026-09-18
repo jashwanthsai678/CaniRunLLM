@@ -11,7 +11,7 @@ later never requires touching the API/dashboard layer.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
+from typing import Iterator
 
 from canirunllm.models.model import ModelSpec
 
@@ -31,9 +31,6 @@ class DownloadProgress:
     message: str | None = None
 
 
-ProgressCallback = Callable[[DownloadProgress], None]
-
-
 class Backend(ABC):
     """One way to get a model downloaded and actually serving locally."""
 
@@ -46,9 +43,9 @@ class Backend(ABC):
         configured?)."""
 
     @abstractmethod
-    def download(self, model: ModelSpec, on_progress: ProgressCallback) -> None:
-        """Fetch whatever this backend needs to serve `model`, calling
-        on_progress() as it goes. Raises on failure."""
+    def download(self, model: ModelSpec) -> Iterator[DownloadProgress]:
+        """Fetch whatever this backend needs to serve `model`, yielding
+        DownloadProgress as it goes. Raises on failure."""
 
     @abstractmethod
     def serve(self, model: ModelSpec) -> str:
@@ -57,3 +54,9 @@ class Backend(ABC):
     @abstractmethod
     def stop(self) -> None:
         """Stop whatever this backend is currently serving."""
+
+    @abstractmethod
+    def chat(self, model: ModelSpec, message: str) -> str:
+        """Send one message to `model` (already serving) and return its
+        reply. Each backend speaks its own protocol to its own endpoint
+        internally - callers never talk to that endpoint directly."""

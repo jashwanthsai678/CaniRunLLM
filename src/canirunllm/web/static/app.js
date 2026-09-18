@@ -506,6 +506,15 @@
           </div>`;
       }
 
+      if (detail.ollama_downloadable) {
+        simpleSection += `
+          <div class="detail-section">
+            <h3>Download &amp; Run</h3>
+            <button id="download-run-btn" class="btn btn-primary">Download &amp; Run (Ollama)</button>
+            <div id="download-status" class="download-status"></div>
+          </div>`;
+      }
+
       simpleSection += `
         <div class="detail-section">
           <h3>Try It (Preview)</h3>
@@ -577,6 +586,7 @@
       }
 
       setupChat(m.name);
+      setupDownload(encodedModelId, m.name);
     } catch (err) {
       content.innerHTML = `<div class="detail-reason">We couldn't load details for this model.<br>Reason: ${err.message}</div>`;
     }
@@ -619,6 +629,70 @@
     sendBtn.addEventListener("click", send);
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") send();
+    });
+  }
+
+  function formatBytesShort(bytes) {
+    if (!bytes) return "";
+    return `${(bytes / (1024 ** 3)).toFixed(2)} GB`;
+  }
+
+  function setupDownload(encodedModelId, modelName) {
+    const btn = document.getElementById("download-run-btn");
+    const status = document.getElementById("download-status");
+    if (!btn || !status) return;
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      status.textContent = "Starting...";
+
+      try {
+        const response = await fetch(`/api/models/${encodedModelId}/download`, { method: "POST" });
+
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.detail || `Request failed: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            const event = JSON.parse(line);
+
+            if (event.status === "FAILED") {
+              status.textContent = `Failed: ${event.message}`;
+              btn.disabled = false;
+              return;
+            }
+
+            if (event.status === "RUNNING") {
+              status.textContent = `Running - ${event.message}`;
+              btn.textContent = "Running";
+              loadRuntimeStatus();
+              return;
+            }
+
+            const pct = event.total_bytes
+              ? ` (${formatBytesShort(event.bytes_downloaded)} / ${formatBytesShort(event.total_bytes)})`
+              : "";
+            status.textContent = `${event.message || "Downloading"}${pct}`;
+          }
+        }
+      } catch (err) {
+        status.textContent = `Something went wrong: ${err.message}`;
+        btn.disabled = false;
+      }
     });
   }
 

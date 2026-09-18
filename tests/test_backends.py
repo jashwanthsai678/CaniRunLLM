@@ -14,14 +14,17 @@ class _FakeBackend(Backend):
     def is_available(self) -> bool:
         return self._available
 
-    def download(self, model, on_progress) -> None:
-        on_progress(DownloadProgress(DownloadStatus.COMPLETE, 0, 0))
+    def download(self, model):
+        yield DownloadProgress(DownloadStatus.COMPLETE, 0, 0)
 
     def serve(self, model) -> str:
         return "http://localhost:0"
 
     def stop(self) -> None:
         pass
+
+    def chat(self, model, message) -> str:
+        return "fake reply"
 
 
 def test_backend_is_abstract():

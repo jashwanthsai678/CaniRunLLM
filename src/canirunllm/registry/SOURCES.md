@@ -472,11 +472,11 @@ values can be re-verified or updated later.
   https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF
   (Q5_K_M = 783 MB).
 
-## Ollama run commands (api/presentation.py, not models.json)
+## Ollama run commands (backends/ollama_tags.py, not models.json)
 
-Separate from the registry data above: `_OLLAMA_TAGS` in
-`api/presentation.py` maps specific registry entry names to verified
-Ollama library tags, checked directly against
+Separate from the registry data above: `OLLAMA_TAGS` in
+`backends/ollama_tags.py` maps specific registry entry names to
+verified Ollama library tags, checked directly against
 `https://ollama.com/library/<family>/tags` for: Qwen3 (4B/8B/14B/32B),
 Qwen2.5 (0.5B/1.5B), Qwen2.5-Coder-7B, Llama-3.1-8B-Instruct,
 Llama-3.2 (1B/3B)-Instruct, Mistral-7B-Instruct-v0.3, Gemma-2-9B-it,
