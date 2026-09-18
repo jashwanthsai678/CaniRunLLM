@@ -41,17 +41,23 @@ Runtime:
 
 ## Phase 0 — Shared foundation
 
-No user-visible behavior change yet, but both backends depend on this.
+No real backend wired in yet, but the scaffolding both backends
+depend on is done and verified working (headless-browser run,
+screenshot, zero console errors).
 
-- [ ] Define the `Runtime` interface and a manager that picks which
-      backend(s) apply to a given model.
-- [ ] Add disk-space detection to the hardware module.
-- [ ] Build a minimal chat UI in the dashboard (send a prompt, stream
-      a response) against a fake/mock endpoint first, decoupled from
-      either backend being done yet.
-- [ ] Add "currently running model" state to the web app (which
-      model, which backend, which port) so the dashboard can show
-      status and offer to stop it.
+- [x] Define the `Backend` interface (`src/canirunllm/backends/interface.py`)
+      and a `BackendManager` that picks which backend(s) apply to a
+      given model (`src/canirunllm/backends/manager.py`).
+- [x] Add disk-space detection to the hardware module
+      (`hardware/disk.py`, wired into `scan_hardware()` and
+      `/api/hardware`).
+- [x] Build a minimal chat UI in the dashboard (send a prompt, get a
+      response) against a mock `/api/chat` endpoint - a "Try It
+      (Preview)" section in the model detail modal. Always returns an
+      honest placeholder reply, never a fabricated model response.
+- [x] Add "currently running model" state
+      (`src/canirunllm/backends/state.py`, `GET /api/runtime/status`)
+      and a "No model running" indicator in the dashboard topbar.
 
 ## Phase 1 — Ollama backend
 
