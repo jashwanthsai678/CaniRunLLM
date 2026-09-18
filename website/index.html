@@ -46,44 +46,48 @@
     <div class="mock-window">
       <div class="mock-titlebar">
         <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
-        <span class="mock-title">CanIRunLLM — Your Local AI Report</span>
+        <span class="mock-title">canirunllm scan</span>
       </div>
       <div class="mock-body">
-        <div class="mock-hero-line">Your computer can run <strong>14 models</strong> comfortably, and <strong>5 more</strong> with slower CPU/RAM offload.</div>
+        <div class="mock-line"><span class="mock-prompt">$</span> canirunllm scan</div>
+        <div class="mock-line mock-dim">Checking your computer... CPU, RAM, GPU, VRAM detected</div>
+        <div class="mock-line mock-dim">Analyzing local AI models... 62 models analyzed</div>
+        <div class="mock-line">&nbsp;</div>
+        <div class="mock-line">You can run <strong>14 models</strong> comfortably, and <strong>5 more</strong> with offload.</div>
+        <div class="mock-line">&nbsp;</div>
         <div class="mock-best">
-          <div class="mock-best-label">Recommended for your hardware</div>
+          <div class="mock-best-label"># recommended for your hardware</div>
           <div class="mock-best-name">Qwen3-8B-Q4_K_M</div>
-          <div class="mock-best-check">✓ Runs comfortably</div>
+          <div class="mock-best-check">✓ runs comfortably</div>
         </div>
+        <div class="mock-line">&nbsp;</div>
         <div class="mock-buckets">
-          <div class="mock-bucket"><span class="dot dot-green"></span> Can Run — 14</div>
-          <div class="mock-bucket"><span class="dot dot-yellow"></span> Can Run With Offload — 5</div>
-          <div class="mock-bucket"><span class="dot dot-red"></span> Cannot Run — 39</div>
+          <div class="mock-bucket"><span class="dot dot-green"></span>can_run: 14</div>
+          <div class="mock-bucket"><span class="dot dot-yellow"></span>can_run_with_offload: 5</div>
+          <div class="mock-bucket"><span class="dot dot-red"></span>cannot_run: 39</div>
         </div>
+        <div class="mock-line mock-cursor-line"><span class="mock-prompt">$</span> <span class="mock-cursor"></span></div>
       </div>
     </div>
-    <p class="mock-caption">An illustration of the local dashboard's layout — not a live screenshot.</p>
+    <p class="mock-caption">An illustration of a real scan's output — not a live screenshot.</p>
   </section>
 
   <section class="section why-section" id="why">
     <h2>What this is</h2>
     <div class="why-content">
       <p>
-        CanIRunLLM is a straight answer to one question: given the computer
-        you already own, which AI models can it actually run well - and
-        which one should you pick?
+        CanIRunLLM answers one question: given the computer you already
+        own, which AI models can it actually run well, and which one
+        should you pick? It scans your real hardware, checks it against a
+        registry of open-weight models, and tells you plainly what runs
+        comfortably, what runs but slower, and what won't run at all — not
+        after a long download and a crash, but before either happens.
       </p>
       <p>
-        It scans your real hardware, checks it against a registry of real
-        open-weight models, and tells you plainly what runs comfortably,
-        what runs but slower, and what won't run at all - instead of you
-        finding out the hard way, after a long download and a crash.
-      </p>
-      <p>
-        <strong>The value is simple: confidence instead of guesswork.</strong>
-        No wasted downloads, no wondering whether you need new hardware
-        before you've even tried what you have, and no vague "it depends" -
-        just a clear answer, and a model recommendation to match it.
+        That's the whole value: confidence instead of guesswork. No wasted
+        downloads, no wondering if you need new hardware before you've
+        even tried what you have, no vague "it depends." Just an answer,
+        and a model recommendation to go with it.
       </p>
     </div>
   </section>
@@ -92,29 +96,35 @@
     <h2>Why running it locally is worth it</h2>
     <div class="why-content">
       <p>
-        <strong>It's free to use, every time.</strong> A cloud AI service
-        charges per use, forever. A local model costs nothing once it's on
-        your machine - run it once or a thousand times a day, the price
-        doesn't change.
+        Most software being built right now is agentic — a chain of LLM
+        calls handling a task end to end, not one prompt and one answer.
+        Look at what those calls are actually doing, though, and most of
+        them aren't hard reasoning problems at all: routing a request,
+        picking a tool, reformatting a result, deciding what to do next.
+        Small, simple decisions, made over and over, dozens or hundreds of
+        times to finish one task. Paying a cloud provider per call for
+        that, at agent scale, adds up fast — for work a small model could
+        handle just as well. That's the gap this fills: if your hardware
+        can run that model, there's no reason to keep paying per call for
+        it.
       </p>
       <p>
-        <strong>Nobody else can take it away.</strong> A cloud service can
-        raise its price, change its limits, or shut down - on its own
-        schedule. A model on your own disk keeps working regardless.
+        The same math holds outside of agents, too. A cloud AI service
+        charges for every use, and it always will; a model on your own
+        machine costs nothing once it's downloaded, whether you run it
+        once or a thousand times a day. It can't be taken away the way a
+        cloud tier can have its price raised or its access cut off
+        overnight. And because nothing leaves your machine, there's no
+        privacy policy standing between your data and the model — there's
+        simply nothing sent anywhere to begin with, and no internet
+        connection required either.
       </p>
       <p>
-        <strong>Your data never leaves your machine.</strong> Not a privacy
-        policy to trust - simply nothing sent anywhere.
-      </p>
-      <p>
-        <strong>It works without the internet.</strong> No connection
-        needed, no waiting on someone else's servers.
-      </p>
-      <p>
-        This isn't a claim that local always beats the cloud - for the
-        hardest problems, it often doesn't. But for the everyday work most
-        people actually use AI for, local is good enough today, and that
-        makes it the better deal.
+        None of that means local wins everywhere. For the hardest
+        problems, a frontier model in the cloud is still the better tool.
+        But for the large share of work — agentic or not — that isn't a
+        hard problem, local is good enough now, and that alone tips the
+        balance.
       </p>
     </div>
   </section>
@@ -123,24 +133,32 @@
     <h2>How it works</h2>
     <div class="steps">
       <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-title">Scan your hardware</div>
-        <div class="step-text">CPU, RAM, GPU, and VRAM — detected directly from your machine, nothing uploaded anywhere.</div>
+        <div class="step-num">01</div>
+        <div class="step-body">
+          <div class="step-title">Scan your hardware</div>
+          <div class="step-text">CPU, RAM, GPU, and VRAM — detected directly from your machine, nothing uploaded anywhere.</div>
+        </div>
       </div>
       <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-title">Evaluate real models</div>
-        <div class="step-text">Every model + quantization pair is checked for weight memory, KV cache growth, runtime overhead, and safety margin — not just file size.</div>
+        <div class="step-num">02</div>
+        <div class="step-body">
+          <div class="step-title">Evaluate real models</div>
+          <div class="step-text">Every model + quantization pair is checked for weight memory, KV cache growth, runtime overhead, and safety margin — not just file size.</div>
+        </div>
       </div>
       <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-title">Get a plain-language verdict</div>
-        <div class="step-text">"Runs comfortably," "Runs, but slower," or "Not enough resources" — each with the actual reasons, and an alternative model if one doesn't fit.</div>
+        <div class="step-num">03</div>
+        <div class="step-body">
+          <div class="step-title">Get a plain-language verdict</div>
+          <div class="step-text">"Runs comfortably," "Runs, but slower," or "Not enough resources" — each with the actual reasons, and an alternative model if one doesn't fit.</div>
+        </div>
       </div>
       <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-title">Drill down if you want</div>
-        <div class="step-text">Every number — VRAM, RAM, KV cache, confidence — is one click away behind a "Technical details" toggle.</div>
+        <div class="step-num">04</div>
+        <div class="step-body">
+          <div class="step-title">Drill down if you want</div>
+          <div class="step-text">Every number — VRAM, RAM, KV cache, confidence — is one click away behind a "Technical details" toggle.</div>
+        </div>
       </div>
     </div>
   </section>
