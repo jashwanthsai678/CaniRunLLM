@@ -17,7 +17,14 @@ Every push to `main` that touches this folder will auto-redeploy.
 
 ## The "Test Now" download button
 
-It points at:
+It links to `download.html`, a dedicated download page, rather than
+triggering the `.exe` download directly — clicking a link on the
+landing page and immediately getting a browser download prompt with
+no context in between felt abrupt, and a real download page gives a
+place to explain what happens next and let people verify the release
+themselves first.
+
+`download.html`'s actual button points at:
 
 ```
 https://github.com/jashwanthsai678/CaniRunLLM/releases/latest/download/CanIRunLLM.exe
@@ -28,7 +35,8 @@ This is a stable GitHub URL — it always resolves to the file named
 "latest." You don't need to update this link when you cut a new
 release; you just need every release to keep attaching the built
 exe under that exact filename (see `../packaging/README.md` for how
-to build it).
+to build it). The Install section's `.exe` tab on the main page links
+to the same `download.html` page, for consistency.
 
 ## Local preview
 

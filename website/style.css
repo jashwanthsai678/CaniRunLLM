@@ -133,6 +133,41 @@ main {
   transition: filter 0.15s, border-color 0.15s;
 }
 
+.btn-large {
+  padding: 16px 36px;
+  font-size: 17px;
+}
+
+.download-hero {
+  text-align: center;
+  padding: 96px 24px 48px 24px;
+}
+
+.download-hero h1 {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px 0;
+}
+
+.download-sub {
+  max-width: 520px;
+  margin: 0 auto 32px auto;
+  color: var(--text-dim);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.download-sub code { font-family: var(--mono); color: var(--text); }
+
+.download-note {
+  max-width: 480px;
+  margin: 20px auto 0 auto;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .btn-primary {
   background: var(--accent);
   color: #04101f;
