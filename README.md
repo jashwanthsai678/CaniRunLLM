@@ -78,11 +78,42 @@ trial and (expensive) error.
 
 ## Install
 
-Requires **Python 3.10 or newer**.
+**Windows, no Python needed:** download `CanIRunLLM.exe` from the
+[latest release](https://github.com/jashwanthsai678/CaniRunLLM/releases/latest)
+(or from [canirunllm.vercel.app](https://canirunllm.vercel.app)) and
+double-click it.
+
+**Any OS with Python already installed:**
 
 ```bash
 pip install canirunllm
+canirunllm scan
 ```
+
+Run `canirunllm --help` any time to see every command.
+
+<details>
+<summary>pip install failing? (click to expand)</summary>
+
+`canirunllm` requires **Python 3.10+**. If `pip install canirunllm` reports
+it can't find a matching version, your plain `pip`/`python` commands are
+pointing at an older Python (commonly 3.9 on Windows, if more than one
+version is installed). Check what's available:
+
+```cmd
+py -0
+```
+
+Then install with a specific newer version:
+
+```cmd
+py -3.11 -m pip install canirunllm
+py -3.11 -m canirunllm.cli scan
+```
+
+Or skip this entirely and use the `.exe` above — it needs no Python at all.
+
+</details>
 
 or from source:
 
@@ -91,24 +122,6 @@ git clone https://github.com/jashwanthsai678/CaniRunLLM.git
 cd CaniRunLLM
 pip install -e .
 ```
-
-or download the standalone Windows executable (no Python required) from the
-[latest release](https://github.com/jashwanthsai678/CaniRunLLM/releases/latest) —
-or from [canirunllm.vercel.app](https://canirunllm.vercel.app) if the site is
-live for you.
-
-> **Windows users with multiple Python versions installed:** your plain
-> `pip`/`python` commands might point at an older Python (commonly 3.9,
-> which this project doesn't support). If `pip install canirunllm` says
-> it can't find a matching version, check what's installed with:
-> ```cmd
-> py -0
-> ```
-> then install using a specific newer version explicitly:
-> ```cmd
-> py -3.11 -m pip install canirunllm
-> py -3.11 -m canirunllm.cli scan
-> ```
 
 ## Quick start
 

@@ -23,16 +23,33 @@ def format_performance(performance):
     )
 
 
+def print_help():
+    print("CanIRunLLM - find out which local LLMs your machine can run.")
+    print()
+    print("Usage:")
+    print("  canirunllm scan               scan hardware, evaluate models, open the dashboard")
+    print("  canirunllm scan --no-browser  same, but skip opening the dashboard (CI/headless)")
+    print("  canirunllm scan --technical   also print the full technical breakdown in the terminal")
+    print()
+    print("  canirunllm search <query>     search the model registry, e.g. canirunllm search qwen")
+    print("  canirunllm check <model>      check one model or a whole family, e.g. canirunllm check Qwen3-8B")
+    print("  canirunllm recommend          ranked list of models for your hardware")
+    print()
+    print("  canirunllm web                launch the dashboard on its own")
+    print("  canirunllm web --port 9000    on a custom port")
+    print()
+    print("  canirunllm --help             show this message")
+    print("  canirunllm --version          show the installed version")
+
+
 def main():
-    if len(sys.argv) < 2:
-        print("Can I Run LLM?")
-        print()
-        print("Usage:")
-        print("  canirunllm scan")
-        print("  canirunllm search <query>")
-        print("  canirunllm check <model>")
-        print("  canirunllm recommend")
-        print("  canirunllm web")
+    if len(sys.argv) < 2 or sys.argv[1] in ("--help", "-h"):
+        print_help()
+        return
+
+    if sys.argv[1] in ("--version", "-v"):
+        from canirunllm import __version__
+        print(f"canirunllm {__version__}")
         return
 
     command = sys.argv[1]
@@ -323,6 +340,7 @@ def main():
 
     else:
         print(f"Unknown command: {command}")
+        print("Run 'canirunllm --help' to see available commands.")
 
 
 if __name__ == "__main__":
