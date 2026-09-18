@@ -156,7 +156,7 @@
         <div class="step-num">02</div>
         <div class="step-body">
           <div class="step-title">Evaluate real models</div>
-          <div class="step-text">Every model + quantization pair is checked for weight memory, KV cache growth, runtime overhead, and safety margin — not just file size.</div>
+          <div class="step-text">Every model on the list is checked against your exact hardware — not just compared by download size.</div>
         </div>
       </div>
       <div class="step">
@@ -170,7 +170,7 @@
         <div class="step-num">04</div>
         <div class="step-body">
           <div class="step-title">Drill down if you want</div>
-          <div class="step-text">Every number — VRAM, RAM, KV cache, confidence — is one click away behind a "Technical details" toggle.</div>
+          <div class="step-text">Want the full picture behind the verdict? It's one click away, for anyone who wants it.</div>
         </div>
       </div>
     </div>
@@ -180,12 +180,12 @@
     <h2>What makes it different from a VRAM calculator</h2>
     <div class="feature-grid">
       <div class="feature">
-        <div class="feature-title">Quantization-aware</div>
-        <div class="feature-text">Q4_K_M, Q8_0, and more — the same model at different quantizations is treated as a genuinely different artifact, because it is one.</div>
+        <div class="feature-title">Every version judged on its own</div>
+        <div class="feature-text">A lighter build of a model isn't lumped in with the original — each one gets its own honest answer, because each genuinely needs a different amount of memory.</div>
       </div>
       <div class="feature">
-        <div class="feature-title">Multi-GPU done honestly</div>
-        <div class="feature-text">2×8GB GPUs are never silently treated as one 16GB pool — only combined when the runtime actually supports splitting across them.</div>
+        <div class="feature-title">Multiple GPUs, done honestly</div>
+        <div class="feature-text">Two graphics cards doesn't automatically mean double the usable memory — you only get credit for that when it actually works that way on your setup.</div>
       </div>
       <div class="feature">
         <div class="feature-title">Confidence, not false certainty</div>
