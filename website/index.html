@@ -13,6 +13,7 @@
   <div class="topbar-inner">
     <span class="logo">CanIRunLLM</span>
     <nav class="topnav">
+      <a href="#why">Why</a>
       <a href="#how-it-works">How it works</a>
       <a href="#install">Install</a>
       <a href="https://github.com/jashwanthsai678/CaniRunLLM" target="_blank" rel="noopener">GitHub</a>
@@ -65,28 +66,55 @@
   </section>
 
   <section class="section why-section" id="why">
-    <h2>Why this exists</h2>
+    <h2>What this is</h2>
     <div class="why-content">
       <p>
-        Open-weight models are closing the gap on proprietary ones fast, and
-        running them locally means no API keys, no per-token bills, no
-        vendor lock-in, and your data never leaving your machine. That
-        future is arriving whether or not any single vendor cooperates.
+        CanIRunLLM is a straight answer to one question: given the computer
+        you already own, which AI models can it actually run well - and
+        which one should you pick?
       </p>
       <p>
-        But "just run it locally" quietly assumes you already know which
-        model fits your hardware, which quantization to use, whether it
-        needs multi-GPU or CPU/RAM offloading, and which runtime actually
-        supports that combination — and gets it wrong just as quietly, with
-        an OOM crash or a model that technically loads but is unusably slow.
+        It scans your real hardware, checks it against a registry of real
+        open-weight models, and tells you plainly what runs comfortably,
+        what runs but slower, and what won't run at all - instead of you
+        finding out the hard way, after a long download and a crash.
       </p>
       <p>
-        CanIRunLLM exists to answer the question that actually matters
-        before any of that: <strong>given the machine you actually have,
-        what should you run?</strong> Not "is this hardware capable in
-        theory," but what you can run today, what you should pick, and why
-        — so local, open-weight models become something you can act on with
-        confidence, not something you find out by trial and expensive error.
+        <strong>The value is simple: confidence instead of guesswork.</strong>
+        No wasted downloads, no wondering whether you need new hardware
+        before you've even tried what you have, and no vague "it depends" -
+        just a clear answer, and a model recommendation to match it.
+      </p>
+    </div>
+  </section>
+
+  <section class="section why-section" id="why-local">
+    <h2>Why running it locally is worth it</h2>
+    <div class="why-content">
+      <p>
+        <strong>It's free to use, every time.</strong> A cloud AI service
+        charges per use, forever. A local model costs nothing once it's on
+        your machine - run it once or a thousand times a day, the price
+        doesn't change.
+      </p>
+      <p>
+        <strong>Nobody else can take it away.</strong> A cloud service can
+        raise its price, change its limits, or shut down - on its own
+        schedule. A model on your own disk keeps working regardless.
+      </p>
+      <p>
+        <strong>Your data never leaves your machine.</strong> Not a privacy
+        policy to trust - simply nothing sent anywhere.
+      </p>
+      <p>
+        <strong>It works without the internet.</strong> No connection
+        needed, no waiting on someone else's servers.
+      </p>
+      <p>
+        This isn't a claim that local always beats the cloud - for the
+        hardest problems, it often doesn't. But for the everyday work most
+        people actually use AI for, local is good enough today, and that
+        makes it the better deal.
       </p>
     </div>
   </section>
