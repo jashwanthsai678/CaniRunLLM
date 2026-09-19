@@ -1,3 +1,4 @@
+import socket
 import threading
 import time
 import webbrowser
@@ -9,6 +10,21 @@ from canirunllm.api.server import app
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
+
+
+def _check_port_available(host: str, port: int) -> None:
+    """Raises a plain, catchable OSError if the port is already taken.
+
+    uvicorn.run() does NOT let a bind failure surface as a normal
+    exception - it logs its own message internally and calls
+    sys.exit(), which is a SystemExit, not an OSError, so callers
+    can't catch it to show a friendly message. Checking ourselves
+    first, with our own socket.bind(), gives a real OSError we can
+    actually handle before uvicorn ever gets involved.
+    """
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind((host, port))
 
 
 def open_browser_later(url: str, delay: float = 1.0) -> None:
@@ -34,6 +50,8 @@ def run_dashboard(
     port: int = DEFAULT_PORT,
     open_browser: bool = True,
 ) -> None:
+
+    _check_port_available(host, port)
 
     url = f"http://{host}:{port}"
 
