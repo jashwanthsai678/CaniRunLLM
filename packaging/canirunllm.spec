@@ -29,7 +29,7 @@ datas = [
 hiddenimports = []
 binaries = []
 
-for package in ("uvicorn", "fastapi", "starlette", "pydantic", "pydantic_core", "GPUtil"):
+for package in ("uvicorn", "fastapi", "starlette", "pydantic", "pydantic_core"):
     pkg_datas, pkg_binaries, pkg_hiddenimports = collect_all(package)
     datas += pkg_datas
     binaries += pkg_binaries

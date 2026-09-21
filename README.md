@@ -217,8 +217,8 @@ whole project.
 
 ## Current limitations (being upfront about them)
 
-- GPU detection currently only recognizes NVIDIA GPUs (via `GPUtil`/
-  `nvidia-smi`). On AMD/Intel/Apple Silicon machines it safely falls back to
+- GPU detection currently only recognizes NVIDIA GPUs (by calling
+  `nvidia-smi` directly). On AMD/Intel/Apple Silicon machines it safely falls back to
   CPU-only mode rather than crashing, but it won't report real GPU numbers yet.
 - The model registry is a curated set of well-known open-weight models, not
   an exhaustive mirror of every model on Hugging Face — see
