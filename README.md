@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="CanIRunLLM" width="220">
+</p>
+
 # CanIRunLLM
 
 [![PyPI](https://img.shields.io/pypi/v/canirunllm)](https://pypi.org/project/canirunllm/)

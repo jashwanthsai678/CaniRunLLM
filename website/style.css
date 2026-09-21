@@ -46,16 +46,23 @@ a { color: var(--accent); }
   justify-content: space-between;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-mark {
+  height: 26px;
+  width: 26px;
+  display: block;
+}
+
 .logo {
   font-family: var(--mono);
   font-weight: 700;
   font-size: 17px;
   letter-spacing: -0.01em;
-}
-
-.logo::before {
-  content: "> ";
-  color: var(--accent);
 }
 
 .topnav {
