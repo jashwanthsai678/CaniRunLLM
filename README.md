@@ -1,16 +1,20 @@
 <p align="center">
-  <img src="assets/logo.png" alt="CanIRunLLM" width="220">
+  <img src="assets/icon_mark.png" alt="CanIRunLLM" width="120">
 </p>
 
-# CanIRunLLM
+<h1 align="center">CanIRunLLM</h1>
 
-[![PyPI](https://img.shields.io/pypi/v/canirunllm)](https://pypi.org/project/canirunllm/)
-[![Python](https://img.shields.io/pypi/pyversions/canirunllm)](https://pypi.org/project/canirunllm/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-177%20passing-brightgreen)](tests)
+<p align="center">
+  Find out which open-source LLMs your machine can actually run — and which
+  one you should pick — with an automatic hardware scan and a local dashboard.
+</p>
 
-Find out which open-source LLMs your machine can actually run — and which
-one you should pick — with an automatic hardware scan and a local dashboard.
+<p align="center">
+  <a href="https://pypi.org/project/canirunllm/"><img src="https://img.shields.io/pypi/v/canirunllm" alt="PyPI"></a>
+  <a href="https://pypi.org/project/canirunllm/"><img src="https://img.shields.io/pypi/pyversions/canirunllm" alt="Python"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="tests"><img src="https://img.shields.io/badge/tests-201%20passing-brightgreen" alt="Tests"></a>
+</p>
 
 CanIRunLLM inspects your real CPU, RAM, and GPU/VRAM, checks that against a
 registry of real open-weight models (Qwen, Llama, Mistral, Gemma, Phi,
