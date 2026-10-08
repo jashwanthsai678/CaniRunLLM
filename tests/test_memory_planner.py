@@ -163,6 +163,99 @@ def test_custom_reservation_percentages_are_applied():
     assert plan.usable_ram_bytes == int(15 * 1024**3)
 
 
+def test_unified_memory_gpu_is_not_double_counted_with_ram():
+    """Apple Silicon: the GPU's "free memory" is the same physical RAM
+    pool, not extra capacity on top of it. CPU-offload fit must not
+    come out looking like free RAM + that same free RAM again."""
+
+    hardware = HardwareProfile(
+        cpu=CPUInfo(
+            name="Apple M2",
+            architecture="arm64",
+            physical_cores=8,
+            logical_cores=8,
+            frequency_mhz=None,
+        ),
+        memory=MemoryInfo(
+            total_bytes=int(16 * 1024**3),
+            available_bytes=int(8 * 1024**3),
+            used_bytes=int(8 * 1024**3),
+            usage_percent=50,
+        ),
+        os=OSInfo(
+            system="Darwin",
+            release="23",
+            version="Test",
+            machine="arm64",
+        ),
+        gpus=[
+            GPUInfo(
+                name="Apple M2 GPU",
+                memory_total_bytes=int(16 * 1024**3),
+                memory_used_bytes=int(8 * 1024**3),
+                memory_free_bytes=int(8 * 1024**3),
+                utilization_percent=0,
+                is_unified_memory=True,
+            )
+        ],
+    )
+
+    plan = create_memory_plan(
+        hardware,
+        required_bytes=int(10 * 1024**3),
+        config=MemoryConfig(gpu_reserved_percent=0.0, ram_reserved_percent=0.0),
+    )
+
+    # A model that needs more than the 8 GB of free unified memory
+    # must not appear to fit "with CPU offload" just because the same
+    # 8 GB got counted once as GPU and once as RAM.
+    assert plan.can_fit_single_gpu is False
+    assert plan.can_fit_with_cpu_offload is False
+
+
+def test_unified_memory_gpu_still_satisfies_single_gpu_fit():
+
+    hardware = HardwareProfile(
+        cpu=CPUInfo(
+            name="Apple M2",
+            architecture="arm64",
+            physical_cores=8,
+            logical_cores=8,
+            frequency_mhz=None,
+        ),
+        memory=MemoryInfo(
+            total_bytes=int(16 * 1024**3),
+            available_bytes=int(8 * 1024**3),
+            used_bytes=int(8 * 1024**3),
+            usage_percent=50,
+        ),
+        os=OSInfo(
+            system="Darwin",
+            release="23",
+            version="Test",
+            machine="arm64",
+        ),
+        gpus=[
+            GPUInfo(
+                name="Apple M2 GPU",
+                memory_total_bytes=int(16 * 1024**3),
+                memory_used_bytes=int(8 * 1024**3),
+                memory_free_bytes=int(8 * 1024**3),
+                utilization_percent=0,
+                is_unified_memory=True,
+            )
+        ],
+    )
+
+    plan = create_memory_plan(
+        hardware,
+        required_bytes=int(6 * 1024**3),
+        config=MemoryConfig(gpu_reserved_percent=0.0, ram_reserved_percent=0.0),
+    )
+
+    assert plan.can_fit_single_gpu is True
+
+
 def test_reservation_can_tip_a_borderline_model_from_fit_to_no_fit():
 
     hardware = create_hardware([10], ram_gb=0)

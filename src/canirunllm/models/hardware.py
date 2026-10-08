@@ -25,6 +25,11 @@ class GPUInfo:
     memory_used_bytes: int
     memory_free_bytes: int
     utilization_percent: float
+    # True on Apple Silicon: the GPU has no VRAM of its own, it shares
+    # system RAM. Callers that combine GPU and RAM capacity (see
+    # compatibility/memory_planner.py) must not count this GPU's memory
+    # on top of RAM - it's the same physical pool.
+    is_unified_memory: bool = False
 
 
 @dataclass

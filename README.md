@@ -225,9 +225,12 @@ whole project.
 
 ## Current limitations (being upfront about them)
 
-- GPU detection currently only recognizes NVIDIA GPUs (by calling
-  `nvidia-smi` directly). On AMD/Intel/Apple Silicon machines it safely falls back to
-  CPU-only mode rather than crashing, but it won't report real GPU numbers yet.
+- GPU detection recognizes NVIDIA (via `nvidia-smi`), AMD on machines with
+  ROCm installed (via `rocm-smi` - mainly Linux; plain Windows+AMD without
+  ROCm isn't covered), and Apple Silicon Macs (unified memory, reported
+  as such so it isn't double-counted against system RAM). Intel GPUs and
+  plain Windows+AMD still fall back to CPU-only mode rather than crashing,
+  but won't report real GPU numbers yet.
 - The model registry is a curated set of well-known open-weight models, not
   an exhaustive mirror of every model on Hugging Face — see
   [`src/canirunllm/registry/SOURCES.md`](src/canirunllm/registry/SOURCES.md)
@@ -252,8 +255,9 @@ Contributions are welcome, especially:
   repo, file sizes) in
   [`SOURCES.md`](src/canirunllm/registry/SOURCES.md). Never fabricate a
   number — if something can't be verified, it doesn't go in.
-- **AMD/Intel/Apple Silicon GPU detection** — the hardware scanner
-  (`src/canirunllm/hardware/`) currently only supports NVIDIA.
+- **Intel GPU detection, and Windows+AMD without ROCm** — the hardware
+  scanner (`src/canirunllm/hardware/gpu.py`) covers NVIDIA, ROCm-based
+  AMD, and Apple Silicon so far.
 - **Bug reports** — via [GitHub Issues](https://github.com/jashwanthsai678/CaniRunLLM/issues).
 
 Before opening a PR, run the test suite (see below) and make sure it passes.

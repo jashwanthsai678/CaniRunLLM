@@ -22,6 +22,7 @@ class GPUResponse(BaseModel):
     memory_used_bytes: int
     memory_free_bytes: int
     utilization_percent: float
+    is_unified_memory: bool = False
 
 
 class OSResponse(BaseModel):

@@ -284,7 +284,7 @@
         cards += `
           <div class="hw-card">
             <div class="hw-label">GPU ${gpus.length > 1 ? index : ""}</div>
-            <div class="hw-value">${gpu.name}</div>
+            <div class="hw-value">${gpu.name}${gpu.is_unified_memory ? " (unified memory)" : ""}</div>
             <div class="hw-sub">${bytesToGB(gpu.memory_free_bytes)} free / ${bytesToGB(gpu.memory_total_bytes)} total</div>
             <div class="memory-bar"><div class="memory-bar-fill ${vramClass}" style="width:${vramPercent.toFixed(0)}%"></div></div>
           </div>`;

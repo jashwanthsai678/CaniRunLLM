@@ -219,7 +219,8 @@ def main():
 
                 for index, gpu in enumerate(gpus):
 
-                    print(f"GPU {index}: {gpu.name}")
+                    label = " (unified memory)" if gpu.is_unified_memory else ""
+                    print(f"GPU {index}: {gpu.name}{label}")
 
                     print(
                         f"  VRAM: "

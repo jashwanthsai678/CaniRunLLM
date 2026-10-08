@@ -36,8 +36,21 @@ def create_memory_plan(
         for gpu in hardware.gpus
     ]
 
+    # Unified-memory GPUs (Apple Silicon) have no VRAM of their own -
+    # their "free memory" is the same physical pool as system RAM, not
+    # capacity on top of it. They still count for the single-GPU check
+    # (a model that fits in unified memory genuinely fits), but they're
+    # excluded here so RAM isn't added to itself when checking whether
+    # offloading the rest to RAM would help.
+    offloadable_gpu_free = [
+        gpu.memory_free_bytes
+        for gpu in hardware.gpus
+        if not gpu.is_unified_memory
+    ]
+
     largest_gpu = max(gpu_free, default=0)
     total_gpu = sum(gpu_free)
+    total_offloadable_gpu = sum(offloadable_gpu_free)
 
     ram = hardware.memory.available_bytes
 
@@ -61,7 +74,7 @@ def create_memory_plan(
 
     usable_total_gpu = max(
         0,
-        total_gpu - gpu_reservation
+        total_offloadable_gpu - gpu_reservation
     )
 
     return MemoryPlan(
