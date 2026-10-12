@@ -1,0 +1,30 @@
+[
+  {
+    "name": "FrogNano-4B-2609-Q4_K_M",
+    "family": "FrogNano-4B-2609",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_5",
+    "quantization": "Q4_K_M",
+    "context_length": "REVIEW",
+    "runtime": "llama.cpp",
+    "num_layers": null,
+    "num_kv_heads": null,
+    "head_dim": null,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 2797526816
+  },
+  {
+    "name": "FrogNano-4B-2609-Q8_0",
+    "family": "FrogNano-4B-2609",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_5",
+    "quantization": "Q8_0",
+    "context_length": "REVIEW",
+    "runtime": "llama.cpp",
+    "num_layers": null,
+    "num_kv_heads": null,
+    "head_dim": null,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 4622130976
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Qwen3-Coder-Next-Q4_K_M",
+    "family": "Qwen3-Coder-Next",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_next",
+    "quantization": "Q4_K_M",
+    "context_length": 262144,
+    "runtime": "llama.cpp",
+    "num_layers": 48,
+    "num_kv_heads": 2,
+    "head_dim": 256,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 48528320544
+  },
+  {
+    "name": "Qwen3-Coder-Next-Q8_0",
+    "family": "Qwen3-Coder-Next",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_next",
+    "quantization": "Q8_0",
+    "context_length": 262144,
+    "runtime": "llama.cpp",
+    "num_layers": 48,
+    "num_kv_heads": 2,
+    "head_dim": 256,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  }
+]

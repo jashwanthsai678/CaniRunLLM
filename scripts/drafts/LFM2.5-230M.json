@@ -1,0 +1,30 @@
+[
+  {
+    "name": "LFM2.5-230M-Q4_K_M",
+    "family": "LFM2.5-230M",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "lfm2",
+    "quantization": "Q4_K_M",
+    "context_length": 128000,
+    "runtime": "llama.cpp",
+    "num_layers": 14,
+    "num_kv_heads": 8,
+    "head_dim": 64,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 153406304
+  },
+  {
+    "name": "LFM2.5-230M-Q8_0",
+    "family": "LFM2.5-230M",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "lfm2",
+    "quantization": "Q8_0",
+    "context_length": 128000,
+    "runtime": "llama.cpp",
+    "num_layers": 14,
+    "num_kv_heads": 8,
+    "head_dim": 64,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 246598496
+  }
+]
