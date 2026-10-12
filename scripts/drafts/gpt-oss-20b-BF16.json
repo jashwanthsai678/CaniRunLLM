@@ -1,0 +1,30 @@
+[
+  {
+    "name": "gpt-oss-20b-BF16-Q4_K_M",
+    "family": "gpt-oss-20b-BF16",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "gpt_oss",
+    "quantization": "Q4_K_M",
+    "context_length": 131072,
+    "runtime": "llama.cpp",
+    "num_layers": 24,
+    "num_kv_heads": 8,
+    "head_dim": 64,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 11673418400
+  },
+  {
+    "name": "gpt-oss-20b-BF16-Q8_0",
+    "family": "gpt-oss-20b-BF16",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "gpt_oss",
+    "quantization": "Q8_0",
+    "context_length": 131072,
+    "runtime": "llama.cpp",
+    "num_layers": 24,
+    "num_kv_heads": 8,
+    "head_dim": 64,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 22261911200
+  }
+]
