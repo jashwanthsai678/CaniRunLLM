@@ -1,0 +1,30 @@
+[
+  {
+    "name": "dit-base-Q4_K_M",
+    "family": "dit-base",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "beit",
+    "quantization": "Q4_K_M",
+    "context_length": "REVIEW",
+    "runtime": "llama.cpp",
+    "num_layers": 12,
+    "num_kv_heads": 12,
+    "head_dim": 64,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  },
+  {
+    "name": "dit-base-Q8_0",
+    "family": "dit-base",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "beit",
+    "quantization": "Q8_0",
+    "context_length": "REVIEW",
+    "runtime": "llama.cpp",
+    "num_layers": 12,
+    "num_kv_heads": 12,
+    "head_dim": 64,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  }
+]
