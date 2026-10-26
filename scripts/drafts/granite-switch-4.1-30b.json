@@ -1,0 +1,30 @@
+[
+  {
+    "name": "granite-switch-4.1-30b-Q4_K_M",
+    "family": "granite-switch-4.1-30b",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "granite_switch",
+    "quantization": "Q4_K_M",
+    "context_length": 131072,
+    "runtime": "llama.cpp",
+    "num_layers": 66,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 21035547008
+  },
+  {
+    "name": "granite-switch-4.1-30b-Q8_0",
+    "family": "granite-switch-4.1-30b",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "granite_switch",
+    "quantization": "Q8_0",
+    "context_length": 131072,
+    "runtime": "llama.cpp",
+    "num_layers": 66,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 34047264032
+  }
+]
