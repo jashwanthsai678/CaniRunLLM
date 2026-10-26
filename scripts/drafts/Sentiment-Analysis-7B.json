@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Sentiment-Analysis-7B-Q4_K_M",
+    "family": "Sentiment-Analysis-7B",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "mistral",
+    "quantization": "Q4_K_M",
+    "context_length": 32768,
+    "runtime": "llama.cpp",
+    "num_layers": 32,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 4368441440
+  },
+  {
+    "name": "Sentiment-Analysis-7B-Q8_0",
+    "family": "Sentiment-Analysis-7B",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "mistral",
+    "quantization": "Q8_0",
+    "context_length": 32768,
+    "runtime": "llama.cpp",
+    "num_layers": 32,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 7695859808
+  }
+]
