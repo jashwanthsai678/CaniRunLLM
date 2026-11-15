@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Qwen-Image-2.1-PE-I2I-Q4_K_M",
+    "family": "Qwen-Image-2.1-PE-I2I",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_5",
+    "quantization": "Q4_K_M",
+    "context_length": "REVIEW",
+    "runtime": "llama.cpp",
+    "num_layers": null,
+    "num_kv_heads": null,
+    "head_dim": null,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": 5629108864
+  },
+  {
+    "name": "Qwen-Image-2.1-PE-I2I-Q8_0",
+    "family": "Qwen-Image-2.1-PE-I2I",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_5",
+    "quantization": "Q8_0",
+    "context_length": "REVIEW",
+    "runtime": "llama.cpp",
+    "num_layers": null,
+    "num_kv_heads": null,
+    "head_dim": null,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  }
+]
