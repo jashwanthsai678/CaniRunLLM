@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Qwen3.8-27B-NVFP4-Q4_K_M",
+    "family": "Qwen3.8-27B-NVFP4",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_5",
+    "quantization": "Q4_K_M",
+    "context_length": "REVIEW",
+    "runtime": "llama.cpp",
+    "num_layers": null,
+    "num_kv_heads": 4,
+    "head_dim": 256,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  },
+  {
+    "name": "Qwen3.8-27B-NVFP4-Q8_0",
+    "family": "Qwen3.8-27B-NVFP4",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_5",
+    "quantization": "Q8_0",
+    "context_length": "REVIEW",
+    "runtime": "llama.cpp",
+    "num_layers": null,
+    "num_kv_heads": 4,
+    "head_dim": 256,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  }
+]
