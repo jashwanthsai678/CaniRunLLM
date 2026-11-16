@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Qwen3.8-2.4T-A95B-Q4_K_M",
+    "family": "Qwen3.8-2.4T-A95B",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_5_moe_text",
+    "quantization": "Q4_K_M",
+    "context_length": 262144,
+    "runtime": "llama.cpp",
+    "num_layers": 92,
+    "num_kv_heads": 4,
+    "head_dim": 256,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  },
+  {
+    "name": "Qwen3.8-2.4T-A95B-Q8_0",
+    "family": "Qwen3.8-2.4T-A95B",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3_5_moe_text",
+    "quantization": "Q8_0",
+    "context_length": 262144,
+    "runtime": "llama.cpp",
+    "num_layers": 92,
+    "num_kv_heads": 4,
+    "head_dim": 256,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  }
+]
