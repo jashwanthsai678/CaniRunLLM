@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Aion-1.0-Instruct-2.3B-ONNX-WebGPU-Q4_K_M",
+    "family": "Aion-1.0-Instruct-2.3B-ONNX-WebGPU",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3",
+    "quantization": "Q4_K_M",
+    "context_length": 32768,
+    "runtime": "llama.cpp",
+    "num_layers": 28,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  },
+  {
+    "name": "Aion-1.0-Instruct-2.3B-ONNX-WebGPU-Q8_0",
+    "family": "Aion-1.0-Instruct-2.3B-ONNX-WebGPU",
+    "parameters": "REVIEW: not in config.json, check model card",
+    "architecture": "qwen3",
+    "quantization": "Q8_0",
+    "context_length": 32768,
+    "runtime": "llama.cpp",
+    "num_layers": 28,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "kv_cache_dtype_bits": 16,
+    "file_size_bytes": null
+  }
+]
